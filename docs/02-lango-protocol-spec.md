@@ -1,4 +1,4 @@
-# Spesifikasi Protokol Airgo Cast / Lango (draf v0.3)
+# Spesifikasi Protokol Airgo Cast / Lango (draf v0.4)
 
 Sumber (analisis statis, aplikasi tidak dijalankan):
 - **Windows** — Ghidra 12.2 via REA atas `AirgoCastSendKit.dll` (SHA-256 `dbe7c744…a411a`), Airgo Cast v2.10.1.403.
@@ -24,6 +24,33 @@ Kelas Android disebut dengan nama hasil JADX (sebagian disamarkan, mis. `RtspCli
 | File | FTP | kredensial dari respons FILE_SETUP | [O] |
 
 **Port tidak hardcode** di klien: `rtp_port`, `rtcp_port`, `control_port` dikirim **panel** di header `Transport` pada respons [O, `Response.parseResponse`]. Port LRTSP awal datang dari mDNS SRV [I].
+
+## 2a. Port tetap [O, `Constant.<clinit>`]
+
+| Nama | Nilai | Keterangan |
+|---|---|---|
+| `PORT_RTSP` | **3056** | kontrol LRTSP — dipakai saat panel ditemukan lewat kode/IP |
+| `PORT_TCP` | 8899 | default rtp_port (ditimpa oleh `Transport` dari panel) |
+| `PORT_RTCP` | 38769 | default rtcp_port |
+| `PORT_CONTROL` | 38767 | default control_port |
+
+## 2b. Kode di layar panel ("share code") → IP [O, `com.xbh.client.utils.d` = CryCodeUtils, `ScreenMainActivity.f1` "shareCodeToIP"]
+
+Kode yang ditampilkan panel **sekaligus PIN** (dikirim di `Code:`) **dan alamat panel**:
+
+| Input | Dekode |
+|---|---|
+| alamat IPv4 | dipakai langsung |
+| 6 digit `D` | `i = D; while i ≤ 999999: i += 65536`; `v = 999999 − (i − 65536)`; IP = `<2 oktet pertama IP pengirim>.(v >> 8).(v & 255)` |
+| 8 digit | `k = int(d[0..2]) ^ 13`; IP = `<2 oktet pengirim>.(int(d[2..5]) ^ k).(int(d[5..8]) ^ k)` |
+| 8 huruf | huruf `A`..`Y` → basis 25, huruf pertama paling tidak signifikan → 32 bit → IPv4 penuh |
+
+Contoh: `834109` → `x.y.136.2`. Pengirim lalu konek ke port 3056 (§2a).
+Jika pengirim punya beberapa antarmuka (VPN, WSL, …), argocast mencoba satu kandidat per prefiks /16.
+
+**NFC/QR** [O, `ScreenMainActivity.e1`, `ScanCodeActivity`]: payload berupa tautan
+`airgocast://?networkType=…&pinCode=…&ssid=…&deviceName=…&password=…&ipGroup=…`
+(atau `https://www.airgo.link?…`). `pinCode` = kode di atas; `ipGroup` = alamat panel [I].
 
 ## 2. Discovery
 - Query mDNS `_airgo._tcp.local.` (PTR) [O]. Jawaban SRV → host + port [O].

@@ -23,11 +23,15 @@ sentuh besar di ruang rapat/kelas) secara nirkabel, tanpa kabel HDMI.
 Yang Anda butuhkan:
 
 - **Panel interaktif** yang mendukung Airgo Cast / Lango (biasanya ada aplikasi penerima cast di panel).
-- **Jaringan yang sama** — laptop/ponsel dan panel tersambung ke Wi-Fi/LAN yang sama.
-  Jika tidak memungkinkan, sambungkan laptop/ponsel ke **hotspot panel**.
-- **PIN** — kode angka yang tampil di layar panel saat aplikasi penerima dibuka.
-- **Alamat IP panel** (opsional) — hanya jika panel tidak muncul otomatis.
-  Biasanya tertera di layar penerima cast pada panel.
+- **Jaringan yang sama** — laptop/ponsel dan panel tersambung ke Wi-Fi/LAN yang sama
+  (mis. SSID `KANTOR_GUEST` di keduanya). Jika tidak memungkinkan, sambungkan
+  laptop/ponsel ke **hotspot panel**.
+- **Kode di layar panel** — buka aplikasi penerima cast di panel; tampil **KODE PIN**
+  (mis. `834 109`) dan **QR code**. Kode ini sekaligus menunjukkan alamat panel,
+  jadi cukup kode itu saja untuk terhubung.
+
+> 💡 Wi-Fi tamu (*guest*) kantor sering memblokir komunikasi antar-perangkat.
+> Jika gagal terhubung di Wi-Fi tamu, pindah ke Wi-Fi kantor biasa atau hotspot panel.
 
 ## 2. Instalasi
 
@@ -120,29 +124,37 @@ Butuh: Mac dengan Xcode 16+, Flutter, kabel USB, dan Apple ID.
 
 ## 3. Cast layar
 
-Langkahnya sama di Windows, macOS, dan Android.
+Langkahnya sama di Windows, macOS, Android, dan iOS:
 
-### Cara A — pilih panel dari daftar (otomatis)
+| # | Di mana | Langkah |
+|---|---|---|
+| 1 | **Panel** | Buka aplikasi penerima cast. Tampil **KODE PIN** (mis. `834 109`) dan QR code. |
+| 2 | Laptop/ponsel | Pastikan tersambung ke **Wi-Fi yang sama** dengan panel. |
+| 3 | Laptop/ponsel | Buka **argocast**. |
+| 4 | Laptop/ponsel | Ketik kode di **Kode di layar panel** → **Hubungkan**. Di ponsel bisa juga ketuk **Scan QR di layar panel**. |
+| 5 | — | Layar **LIVE** muncul — layar Anda tampil di panel. 🎉 |
 
-1. Buka **argocast**. Bagian **Panel di jaringan** langsung mencari panel.
-   Ketuk **Cari ulang** (atau tarik layar ke bawah di Android) untuk mencari lagi.
-2. Ketuk nama panel.
-3. Masukkan **PIN** yang tampil di layar panel, lalu **Hubungkan**.
-4. **Android:** muncul dialog *"Start recording or casting with argocast?"* →
-   pilih **Entire screen / Seluruh layar** (jika ada pilihan) lalu **Start**.
-   **iOS:** muncul lembar **Screen Broadcast** → pastikan **argocast** tercentang →
-   ketuk **Start Broadcast**, tunggu hitung mundur 3 detik. Jika lembar tertutup,
-   ketuk **Buka lembar siaran** di aplikasi.
-5. Tunggu langkah *Menghubungi panel → Memeriksa PIN → Menyiapkan siaran*.
-6. Layar **LIVE** muncul — layar Anda kini tampil di panel. 🎉
+Kode boleh diketik dengan atau tanpa spasi (`834 109` = `834109`). Kode itu sekaligus
+PIN, jadi tidak perlu mengisi PIN terpisah.
 
-### Cara B — sambung manual dengan IP
+Di langkah 4, khusus ponsel:
+- **Android:** muncul dialog *"Start recording or casting with argocast?"* →
+  pilih **Entire screen / Seluruh layar** (jika ada pilihan) lalu **Start**.
+- **iOS:** muncul lembar **Screen Broadcast** → pastikan **argocast** tercentang →
+  ketuk **Start Broadcast**, tunggu hitung mundur 3 detik. Jika lembar tertutup,
+  ketuk **Buka lembar siaran** di aplikasi.
 
-Gunakan jika panel tidak muncul di daftar.
+Selama menghubungkan, argocast menampilkan *Menghubungi panel → Memeriksa PIN → Menyiapkan siaran*.
 
-1. Di bagian **Sambung manual**, isi **Alamat IP panel**, misalnya `192.168.1.50`.
-   Jika Anda tahu port-nya, tulis `192.168.1.50:7000`.
-2. Isi **PIN**, lalu **Hubungkan**.
+### Alternatif — pilih panel dari daftar
+
+Bagian **Panel di jaringan** mencari panel otomatis (ketuk **Cari ulang**, atau tarik
+layar ke bawah di ponsel). Ketuk nama panel, lalu masukkan PIN yang tampil di panel.
+
+### Alternatif — alamat IP
+
+Ketik alamat IP panel (mis. `192.168.1.50`) di kolom kode; kolom **PIN** akan muncul —
+isi dengan kode di panel, lalu **Hubungkan**.
 
 ### Panel yang pernah dipakai
 
@@ -194,9 +206,12 @@ Ketuk ikon ⚙️ di kanan atas (tidak tersedia saat sedang cast).
 
 | Gejala | Penyebab & solusi |
 |---|---|
-| Panel tidak muncul di daftar | Pastikan satu jaringan. Wi-Fi kantor/tamu sering memblokir pencarian perangkat — gunakan **Sambung manual** dengan IP, atau sambungkan ke hotspot panel. macOS: pastikan izin **Local Network** untuk argocast aktif (System Settings › Privacy & Security › Local Network). |
+| Panel tidak muncul di daftar | Pastikan satu jaringan. Wi-Fi kantor/tamu sering memblokir pencarian perangkat — ketik **kode di layar panel** (tidak butuh pencarian), atau sambungkan ke hotspot panel. macOS: pastikan izin **Local Network** untuk argocast aktif (System Settings › Privacy & Security › Local Network). |
 | **"PIN salah."** | Masukkan ulang PIN yang tampil di panel; PIN bisa berganti setiap kali penerima dibuka. |
-| **"Panel menolak koneksi. Periksa IP dan port."** | IP benar tetapi port salah. Gunakan daftar otomatis (port terdeteksi sendiri) atau tanyakan port ke admin panel. |
+| **"Kode tidak valid."** | Kode panel berupa 6 atau 8 angka (atau 8 huruf). Periksa lagi, atau gunakan alamat IP panel. |
+| **"Panel dengan kode ini tidak ditemukan."** | Kode benar tetapi panel tidak terjangkau — hampir selalu karena beda jaringan atau Wi-Fi tamu yang memblokir antar-perangkat. |
+| **"Panel menolak koneksi. Periksa IP dan port."** | IP benar tetapi aplikasi penerima di panel belum dibuka, atau port bukan 3056. |
+| Scan QR tidak berfungsi | Izinkan akses **kamera** untuk argocast di pengaturan ponsel. Atau ketik saja kodenya. |
 | **"Panel tidak dapat dijangkau."** | IP salah atau beda jaringan. |
 | **"Panel sedang sibuk atau koneksi penuh."** | Peserta lain sedang cast atau batas peserta tercapai. Hentikan cast lain di panel lalu coba lagi. |
 | macOS: **"Tangkap layar gagal"** | Izin Screen Recording belum aktif — lihat [Instalasi macOS](#macos) langkah 4, lalu buka ulang argocast. |

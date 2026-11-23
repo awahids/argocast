@@ -79,7 +79,7 @@ npm run app
 ```
 
 - **Panel di jaringan** — panels found over mDNS; click one and enter the PIN.
-- **Sambung manual** — type `IP` or `IP:port` plus the PIN.
+- **Sambung dengan kode** — type the code shown on the panel (e.g. `834 109`); an IP also works (then a PIN field appears).
 - **LIVE screen** — timer, FPS, bitrate, resolution, *Hentikan cast*.
 - **Pengaturan** (gear icon) — device name, resolution, frame rate, quality
   (weak network 2.5 Mbps / standard 5 Mbps / high 8 Mbps), source (desktop or test pattern).
@@ -147,22 +147,22 @@ GPL (provide/offer the corresponding FFmpeg source; see `resources\ffmpeg-LICENS
 ## Command line
 
 ```powershell
+node src/cli.js cast 834109                     # the code shown on the panel (= PIN + panel address)
+node src/cli.js cast 834 109 -v                 # spaces are fine; -v logs every LRTSP message
 node src/cli.js discover                       # find panels via mDNS (_airgo._tcp)
 node src/cli.js cast                           # cast to the first panel found
-node src/cli.js cast 192.168.1.50:PORT --pin 1234
-node src/cli.js cast 192.168.1.50:PORT --pin 1234 --size 1280x720 --fps 30 --bitrate 4000 -v
-node src/cli.js cast 127.0.0.1 --test          # ffmpeg test pattern instead of the desktop
+node src/cli.js cast 192.168.1.50 --pin 834109 --size 1280x720 --fps 30 --bitrate 4000
+node src/cli.js cast 127.0.0.1 --pin 1234 --test   # ffmpeg test pattern instead of the desktop
 ```
 
-The LRTSP control port comes from the panel's mDNS SRV record. When you give an
-IP without a port, `8554` is used (`--port` or `ARGOCAST_PORT` to override) —
-that default is only the mock panel's port, not a known Lango default.
+A panel code encodes the panel's IP (see [spec §2b](docs/02-lango-protocol-spec.md)); Lango panels
+listen on port **3056** (`--port` / `ARGOCAST_PORT` to override).
 
 ## Local testing without a panel
 
 ```powershell
-node mock/panel.js --pin 1234 --out received.h264   # terminal 1
-node src/cli.js cast 127.0.0.1:8554 --pin 1234      # terminal 2
+node mock/panel.js --pin 1234 --out received.h264   # terminal 1 (listens on 3056)
+node src/cli.js cast 127.0.0.1 --pin 1234           # terminal 2
 ffplay received.h264                                # inspect what the "panel" got
 ```
 

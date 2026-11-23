@@ -12,7 +12,7 @@ final class H264Encoder {
     let width: Int32
     let height: Int32
     private var session: VTCompressionSession?
-    private var transfer: VTPixelTransferSession?
+    private var transfer: AnyObject? // VTPixelTransferSession (iOS 16+)
     private let output: Output
     private let minFrameInterval: CMTime
     private var lastPts = CMTime.invalid
@@ -42,8 +42,16 @@ final class H264Encoder {
         VTSessionSetProperty(s, key: kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration, value: 3 as CFNumber)
         VTCompressionSessionPrepareToEncodeFrames(s)
 
-        var t: VTPixelTransferSession?
-        if VTPixelTransferSessionCreate(allocator: nil, pixelTransferSessionOut: &t) == noErr { transfer = t }
+        if #available(iOS 16.0, macOS 13.0, *) {
+            var t: VTPixelTransferSession?
+            if VTPixelTransferSessionCreate(allocator: nil, pixelTransferSessionOut: &t) == noErr { transfer = t }
+        }
+    }
+
+    /// iOS 15 has no VTPixelTransferSession: encode at the native screen size there.
+    static var canScale: Bool {
+        if #available(iOS 16.0, macOS 13.0, *) { return true }
+        return false
     }
 
     func requestKeyFrame() { forceKey = true }
@@ -56,11 +64,13 @@ final class H264Encoder {
 
         // Scale down to the announced size with the encoder's own pool (keeps memory low).
         var frame = source
-        if CVPixelBufferGetWidth(source) != Int(width) || CVPixelBufferGetHeight(source) != Int(height),
+        if #available(iOS 16.0, macOS 13.0, *),
+           CVPixelBufferGetWidth(source) != Int(width) || CVPixelBufferGetHeight(source) != Int(height),
            let pool = VTCompressionSessionGetPixelBufferPool(session), let transfer {
             var scaled: CVPixelBuffer?
+            // swiftlint:disable:next force_cast
             if CVPixelBufferPoolCreatePixelBuffer(nil, pool, &scaled) == kCVReturnSuccess, let scaled,
-               VTPixelTransferSessionTransferImage(transfer, from: source, to: scaled) == noErr {
+               VTPixelTransferSessionTransferImage(transfer as! VTPixelTransferSession, from: source, to: scaled) == noErr {
                 frame = scaled
             }
         }
@@ -126,12 +136,15 @@ final class H264Encoder {
             VTCompressionSessionInvalidate(session)
         }
         session = nil
-        if let transfer { VTPixelTransferSessionInvalidate(transfer) }
+        if #available(iOS 16.0, macOS 13.0, *), let transfer {
+            VTPixelTransferSessionInvalidate(transfer as! VTPixelTransferSession) // swiftlint:disable:this force_cast
+        }
         transfer = nil
     }
 
     /// Longest side <= maxSize, both sides multiples of 16, aspect ratio kept.
     static func targetSize(sourceWidth: Int, sourceHeight: Int, maxSize: Int) -> (Int32, Int32) {
+        guard canScale else { return (Int32(sourceWidth), Int32(sourceHeight)) }
         let scale = min(1.0, Double(maxSize) / Double(max(sourceWidth, sourceHeight)))
         func align(_ v: Double) -> Int32 { Int32(max(16, Int((v / 16).rounded()) * 16)) }
         return (align(Double(sourceWidth) * scale), align(Double(sourceHeight) * scale))
