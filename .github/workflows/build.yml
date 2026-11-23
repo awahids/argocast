@@ -103,6 +103,7 @@ jobs:
     needs: [windows, macos, android]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4 # for docs/release-notes/<tag>.md
       - uses: actions/download-artifact@v4
         with:
           path: out
@@ -112,6 +113,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ls -la out
-          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
-            || gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "argocast $GITHUB_REF_NAME" --prerelease --generate-notes
+          (cd out && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          NOTES="docs/release-notes/${GITHUB_REF_NAME}.md"
+          if ! gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            if [ -f "$NOTES" ]; then NOTES_ARG=(--notes-file "$NOTES"); else NOTES_ARG=(--generate-notes); fi
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag \
+              --title "argocast $GITHUB_REF_NAME (pre-release)" --prerelease "${NOTES_ARG[@]}"
+          fi
           gh release upload "$GITHUB_REF_NAME" out/* --repo "$GITHUB_REPOSITORY" --clobber

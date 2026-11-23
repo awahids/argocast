@@ -10,6 +10,8 @@ official clients — see [docs/](docs/):
 > ⚠️ Not yet tested against a real panel. Everything is verified only against
 > the bundled mock panel, which implements our reading of the protocol.
 
+📖 **Cara pakai (Bahasa Indonesia): [docs/PANDUAN.md](docs/PANDUAN.md)** — instalasi Windows/macOS/Android, cast, pengaturan, mengatasi masalah.
+
 ## Download
 
 [![Download for Windows](https://img.shields.io/badge/Download-Windows%20x64%20installer-14b8a6?style=for-the-badge&logo=windows)](https://github.com/awahids/argocast/releases/download/v0.1.0/argocast-Setup-0.1.0.exe)
@@ -31,6 +33,36 @@ Invoke-WebRequest -Uri https://github.com/awahids/argocast/releases/download/v0.
 ```
 
 SHA-256: `84fe164ab6b2f3b94419035920a124c9be2d84869e7eeefc8bf485eef07dd988`
+
+### Other platforms
+
+All installers are on the [Releases page](https://github.com/awahids/argocast/releases).
+
+| Platform | File | Notes |
+|---|---|---|
+| Windows 10/11 x64 | `argocast-Setup-<version>.exe` | see above |
+| macOS Apple Silicon (M1–M4) | `argocast-<version>-mac-arm64.dmg` | macOS 11+ |
+| macOS Intel | `argocast-<version>-mac-x64.dmg` | macOS 11+ |
+| Android 7.0+ | `argocast-<version>-android.apk` | sideload |
+| iOS | — | planned |
+
+**macOS** — the app is not notarized by Apple yet, so the first launch is blocked:
+
+1. Open the `.dmg` and drag **argocast** into **Applications**.
+2. Open it once (it will be blocked), then go to **System Settings › Privacy & Security**
+   and click **Open Anyway** next to the argocast message. Alternatively run
+   `xattr -dr com.apple.quarantine /Applications/argocast.app` in Terminal.
+3. Allow **Local Network** when asked (needed to find panels).
+4. On the first cast, allow **Screen Recording** in
+   *System Settings › Privacy & Security › Screen Recording*, then reopen argocast.
+
+**Android** — install the APK directly:
+
+1. Download the `.apk` on the phone and open it; allow *Install unknown apps* for
+   your browser/file manager when Android asks.
+2. Open argocast, pick a panel (or type its IP) and enter the PIN.
+3. Accept the **screen recording** prompt. Casting continues in the background;
+   stop it from the app or the notification.
 
 ## Build from source
 
@@ -63,6 +95,37 @@ saves screenshots to `smoke-output/`):
 
 ```powershell
 npm run smoke
+```
+
+## Building installers
+
+Every platform is built in the cloud by GitHub Actions
+([.github/workflows/build.yml](.github/workflows/build.yml)):
+
+- **Actions → build → Run workflow** builds Windows `.exe`, macOS `.dmg` (arm64 + x64)
+  and Android `.apk` as downloadable workflow artifacts.
+- **Pushing a tag** `vX.Y.Z` does the same and attaches all files to that GitHub Release.
+
+```powershell
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+Local builds: `npm run dist` (Windows, on Windows), `npm run dist:mac` (on a Mac),
+`cd mobile; flutter build apk --release` (needs the Android SDK).
+
+## Android app (Flutter)
+
+Lives in [mobile/](mobile/). Dart does the UI and the protocol
+(`mobile/lib/protocol/` — a port of `src/lrtsp.js`, `src/frame.js`, `src/session.js`);
+Kotlin does what only Android can: MediaProjection screen capture, hardware
+H.264 (MediaCodec) in a `mediaProjection` foreground service, and NsdManager mDNS discovery
+(`mobile/android/app/src/main/kotlin/…`).
+
+```powershell
+cd mobile
+flutter test      # protocol unit tests + end-to-end against mock/panel.js (needs Node)
+flutter run       # on a connected Android device
 ```
 
 ## Windows installer

@@ -1,7 +1,7 @@
 {
   "name": "argocast",
   "productName": "argocast",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Screen-cast sender compatible with Lango/XBH interactive panels (LRTSP/2.0).",
   "author": "argocast",
   "type": "module",
