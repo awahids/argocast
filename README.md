@@ -10,7 +10,31 @@ official clients — see [docs/](docs/):
 > ⚠️ Not yet tested against a real panel. Everything is verified only against
 > the bundled mock panel, which implements our reading of the protocol.
 
-## Requirements
+## Download
+
+[![Download for Windows](https://img.shields.io/badge/Download-Windows%20x64%20installer-14b8a6?style=for-the-badge&logo=windows)](https://github.com/awahids/argocast/releases/download/v0.1.0/argocast-Setup-0.1.0.exe)
+
+**[argocast-Setup-0.1.0.exe](https://github.com/awahids/argocast/releases/download/v0.1.0/argocast-Setup-0.1.0.exe)**
+(137 MB, Windows 10/11 64-bit) · [release notes & all versions](https://github.com/awahids/argocast/releases)
+
+No Node.js, FFmpeg or build needed — everything is inside the installer.
+
+1. Run `argocast-Setup-0.1.0.exe`. The installer is not code-signed yet: on
+   **"Windows protected your PC"** click **More info → Run anyway**.
+2. Follow the wizard (no admin rights needed).
+3. Open **argocast** from the Desktop or Start Menu.
+
+Command-line download:
+
+```powershell
+Invoke-WebRequest -Uri https://github.com/awahids/argocast/releases/download/v0.1.0/argocast-Setup-0.1.0.exe -OutFile "$env:USERPROFILE\Downloads\argocast-Setup-0.1.0.exe"
+```
+
+SHA-256: `84fe164ab6b2f3b94419035920a124c9be2d84869e7eeefc8bf485eef07dd988`
+
+## Build from source
+
+### Requirements
 
 - Node.js ≥ 22
 - FFmpeg on `PATH` (or set `FFMPEG_PATH`) — `winget install Gyan.FFmpeg`
