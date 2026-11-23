@@ -22,6 +22,11 @@
     FFmpeg tidak ditemukan. Pasang dengan <code>winget install Gyan.FFmpeg</code>, lalu buka ulang aplikasi.
   </div>
 
+  <div class="banner info" id="banner-update" hidden>
+    <span id="update-text"></span>
+    <button class="text-btn" id="btn-update" hidden></button>
+  </div>
+
   <!-- HOME -------------------------------------------------------------- -->
   <main id="view-home" class="view">
     <section class="card">
@@ -136,6 +141,10 @@
           <label><input type="radio" name="source" value="test"><span>Pola uji</span></label>
         </div>
       </fieldset>
+      <div class="about">
+        <span>argocast <b id="app-version">—</b> · <span id="update-status"></span></span>
+        <button type="button" class="text-btn" id="btn-check-update">Periksa pembaruan</button>
+      </div>
       <div class="row">
         <button value="cancel" class="ghost" formnovalidate>Tutup</button>
         <button value="ok" class="primary">Simpan</button>

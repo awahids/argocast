@@ -19,4 +19,8 @@ contextBridge.exposeInMainWorld('argocast', {
   onState: on('cast:state'),
   onStats: on('cast:stats'),
   onTouchback: on('cast:touchback'),
+  getUpdate: () => ipcRenderer.invoke('update:get'),
+  checkUpdate: () => ipcRenderer.invoke('update:check'),
+  installUpdate: () => ipcRenderer.invoke('update:install'),
+  onUpdate: on('update:state'),
 });

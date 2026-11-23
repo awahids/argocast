@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { Caster, DEFAULT_PORT } from '../src/caster.js';
 import { discover } from '../src/discovery.js';
 import { findFfmpegAsync } from '../src/capture.js';
+import { Updater } from './updater.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SMOKE = process.env.ARGOCAST_SMOKE === '1';
@@ -28,6 +29,14 @@ let settings = { ...DEFAULT_SETTINGS };
 let win;
 let tray;
 const caster = new Caster();
+const updater = new Updater({
+  isBusy: () => caster.busy,
+  beforeQuit: () => { app.isQuitting = true; },
+});
+updater.on('state', (s) => send('update:state', s));
+if (process.env.ARGOCAST_UPDATE_LOG) {
+  updater.on('state', (s) => fs.appendFileSync(process.env.ARGOCAST_UPDATE_LOG, `${new Date().toISOString()} ${JSON.stringify(s)}\n`));
+}
 
 function loadSettings() {
   settingsFile = path.join(app.getPath('userData'), 'settings.json');
@@ -53,6 +62,9 @@ if (SMOKE) {
   const w = (m) => fs.appendFileSync(logFile, `${new Date().toISOString()} ${m}\n`);
   caster.on('log', (m) => w(String(m).slice(0, 300)));
   caster.on('state', (s) => w(`[state] ${s.state} ${s.message ?? ''}`));
+  ipcMain.on('smoke:mark', (_e, m) => w(`[ui] ${m}`));
+  let last = Date.now(); // main-process event-loop stalls
+  setInterval(() => { const now = Date.now(); if (now - last > 1500) w(`[lag] main blocked ${now - last} ms`); last = now; }, 250);
 }
 
 function createWindow() {
@@ -122,6 +134,7 @@ ipcMain.handle('discover', async () => {
   return found;
 });
 ipcMain.handle('cast:start', async (_e, { host, port, pin, name, code }) => {
+  if (SMOKE) caster.emit('log', `[ipc] cast:start ${host ?? code}`);
   const [width, height] = settings.resolution.split('x').map(Number);
   try {
     await caster.start({
@@ -147,6 +160,9 @@ ipcMain.handle('cast:start', async (_e, { host, port, pin, name, code }) => {
 });
 ipcMain.handle('cast:stop', () => caster.stop());
 ipcMain.handle('cast:status', () => ({ state: caster.state }));
+ipcMain.handle('update:get', () => updater.state);
+ipcMain.handle('update:check', () => updater.check(true));
+ipcMain.handle('update:install', () => updater.install());
 
 // ---- lifecycle --------------------------------------------------------------
 // One instance only: launching again (e.g. from the Start menu) focuses the existing window.
@@ -161,6 +177,7 @@ app.whenReady().then(async () => {
   findFfmpegAsync(); // warm up early: first run after install may wait on an antivirus scan
   createWindow();
   if (!SMOKE) {
+    updater.init();
     tray = new Tray(trayIcon());
     tray.on('click', () => { win.show(); win.focus(); });
     updateTray('idle');

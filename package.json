@@ -24,6 +24,7 @@
     "node": ">=22"
   },
   "dependencies": {
+    "electron-updater": "6.8.11",
     "multicast-dns": "^7.2.5"
   },
   "devDependencies": {
@@ -47,31 +48,59 @@
       "build/icon.png",
       "!**/*.test.js"
     ],
+    "publish": [
+      { "provider": "github", "owner": "awahids", "repo": "argocast", "releaseType": "prerelease" }
+    ],
     "asarUnpack": [
       "src/inject/**"
     ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "build/icon.png",
       "extraResources": [
-        { "from": "node_modules/ffmpeg-static/ffmpeg.exe", "to": "ffmpeg.exe" },
-        { "from": "node_modules/ffmpeg-static/LICENSE", "to": "ffmpeg-LICENSE.txt" }
+        {
+          "from": "node_modules/ffmpeg-static/ffmpeg.exe",
+          "to": "ffmpeg.exe"
+        },
+        {
+          "from": "node_modules/ffmpeg-static/LICENSE",
+          "to": "ffmpeg-LICENSE.txt"
+        }
       ]
     },
     "mac": {
-      "target": [{ "target": "dmg" }],
+      "target": [
+        {
+          "target": "dmg"
+        }
+      ],
       "category": "public.app-category.productivity",
       "icon": "build/icon.png",
       "identity": "-",
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "extraResources": [
-        { "from": "node_modules/ffmpeg-static/ffmpeg", "to": "ffmpeg" },
-        { "from": "node_modules/ffmpeg-static/LICENSE", "to": "ffmpeg-LICENSE.txt" }
+        {
+          "from": "node_modules/ffmpeg-static/ffmpeg",
+          "to": "ffmpeg"
+        },
+        {
+          "from": "node_modules/ffmpeg-static/LICENSE",
+          "to": "ffmpeg-LICENSE.txt"
+        }
       ],
       "extendInfo": {
         "NSLocalNetworkUsageDescription": "argocast mencari dan terhubung ke panel interaktif di jaringan lokal Anda.",
-        "NSBonjourServices": ["_airgo._tcp"],
+        "NSBonjourServices": [
+          "_airgo._tcp"
+        ],
         "LSApplicationCategoryType": "public.app-category.productivity"
       }
     },
@@ -87,7 +116,10 @@
       "shortcutName": "argocast",
       "runAfterFinish": true,
       "artifactName": "argocast-Setup-${version}.${ext}",
-      "installerLanguages": ["id_ID", "en_US"],
+      "installerLanguages": [
+        "id_ID",
+        "en_US"
+      ],
       "language": "1057"
     }
   }

@@ -197,11 +197,49 @@ $('btn-settings').addEventListener('click', () => {
   dlg.showModal();
 });
 
+// ---- updates ----------------------------------------------------------------
+const isMac = navigator.userAgent.includes('Mac');
+
+function renderUpdate(u) {
+  $('app-version').textContent = `v${u.current}`;
+  const v = u.version ? `v${u.version}` : '';
+  const status = {
+    idle: '', disabled: u.message || 'pembaruan otomatis nonaktif',
+    checking: 'memeriksa…', latest: 'sudah versi terbaru',
+    available: `${v} tersedia`, downloading: `mengunduh ${v}… ${u.percent ?? 0}%`,
+    ready: `${v} siap dipasang`, installing: `memasang ${v}…`, error: u.message || 'gagal memeriksa',
+  }[u.status] ?? '';
+  $('update-status').textContent = status;
+  $('btn-check-update').disabled = ['checking', 'downloading', 'installing'].includes(u.status);
+
+  // Banner: only for something actionable (or a manual check's result).
+  const banner = $('banner-update'), btn = $('btn-update');
+  let text = '', action = '';
+  if (u.status === 'available') { text = `argocast ${v} tersedia.`; action = 'Perbarui sekarang'; }
+  else if (u.status === 'downloading') text = `Mengunduh pembaruan ${v}… ${u.percent ?? 0}%`;
+  else if (u.status === 'ready') {
+    text = `Pembaruan ${v} siap. Dipasang otomatis saat aplikasi ditutup.`;
+    action = 'Mulai ulang sekarang';
+  } else if (u.status === 'installing') text = `Memasang ${v}… argocast akan terbuka kembali.`;
+  else if (u.status === 'error' && (u.manual || isMac && u.version)) text = `Pembaruan gagal: ${u.message}`;
+  else if (u.status === 'latest' && u.manual) text = `Anda sudah memakai versi terbaru (v${u.current}).`;
+  if (u.message && ['available', 'ready'].includes(u.status)) text += ` ${u.message}`;
+  banner.hidden = !text;
+  $('update-text').textContent = text;
+  btn.hidden = !action;
+  btn.textContent = action;
+}
+
+$('btn-update').addEventListener('click', () => api.installUpdate());
+$('btn-check-update').addEventListener('click', () => api.checkUpdate());
+api.onUpdate(renderUpdate);
+
 // ---- boot -----------------------------------------------------------------
 (async () => {
   settings = await api.getSettings();
   api.checkFfmpeg().then((ok) => { $('banner-ffmpeg').hidden = ok; });
   renderRecent();
+  api.getUpdate().then(renderUpdate);
   const { state } = await api.status();
   if (state !== 'idle' && state !== 'error') show('connecting'); else show('home');
   scan();

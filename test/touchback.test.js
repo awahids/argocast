@@ -59,6 +59,8 @@ test('end-to-end: panel touches reach the injector', { skip: !findFfmpeg() && 'f
   const connected = new Promise((r) => caster.once('touchback', r));
   await caster.start({ host: '127.0.0.1', port: 48654, pin: '1111', source: 'test', width: 640, height: 360, fps: 15, bitrateKbps: 500 });
   assert.deepEqual(await connected, { connected: true });
+  // The client's connect can fire before the panel side has registered the socket.
+  for (let i = 0; i < 50 && panel.feedbackClients === 0; i++) await new Promise((r) => setTimeout(r, 20));
   panel.sendTouch(Buffer.concat([
     encodeTouch([{ id: 1, action: 0, x: 32768, y: 32768 }]),
     encodeTouch([{ id: 1, action: 1, x: 32768, y: 32768 }]),

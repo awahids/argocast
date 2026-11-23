@@ -61,6 +61,10 @@ Invoke-WebRequest -Uri https://github.com/awahids/argocast/releases/download/v0.
 3. Accept the **screen recording** prompt. Casting continues in the background;
    stop it from the app or the notification.
 
+**Updates (desktop)** — from v0.4.0 the Windows and macOS apps update themselves from
+GitHub Releases: Windows downloads in the background and installs on restart; macOS asks,
+then swaps the app and relaunches. Versions up to 0.3.0 must be updated by hand once.
+
 ## Build from source
 
 ### Requirements
@@ -196,8 +200,8 @@ capture  ─ ffmpeg gdigrab → libx264 baseline / ultrafast / zerolatency / rep
 
 ## Not implemented yet
 
-Audio, reverse cast, touch/mouse (LRTCP), file upload, moderator control,
-virtual display/extend screen, choosing a single window or monitor, installer (.exe).
+Audio, reverse cast, file upload, moderator control, virtual display/extend screen,
+choosing a single window or monitor, touchback on iOS.
 
 ## Open protocol questions (need a real panel)
 

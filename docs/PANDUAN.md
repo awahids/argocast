@@ -227,6 +227,21 @@ Ketuk ikon ⚙️ di kanan atas (tidak tersedia saat sedang cast).
 | Frame rate | 30 / 24 / 15 fps | 30 untuk video, 15 untuk dokumen statis |
 | Kualitas | Jaringan lemah / Standar / Tinggi | *Jaringan lemah* bila Wi-Fi ramai |
 | Sumber *(Windows/macOS)* | Layar desktop / Pola uji | *Pola uji* untuk mengetes koneksi tanpa menampilkan layar Anda |
+| Touchback | aktif / nonaktif | lihat [Touchback](#touchback-windows-macos-android) |
+
+### Pembaruan otomatis (Windows & macOS)
+
+Aplikasi desktop memeriksa versi baru di GitHub saat dibuka dan setiap 6 jam
+(perlu internet). Versi aplikasi dan tombol **Periksa pembaruan** ada di bawah Pengaturan.
+
+- **Windows:** pembaruan diunduh otomatis di latar belakang. Setelah siap, muncul
+  *"Pembaruan vX siap"* → klik **Mulai ulang sekarang**, atau biarkan — pembaruan dipasang
+  otomatis saat argocast ditutup (lewat **Keluar** di tray).
+- **macOS:** muncul *"argocast vX tersedia"* → klik **Perbarui sekarang**. argocast mengunduh
+  versi baru, menggantinya di folder Applications, lalu membuka kembali. Jika gagal (mis. tidak ada
+  izin menulis ke folder aplikasi), file DMG dibuka — seret argocast ke Applications seperti biasa.
+- Pembaruan tidak dipasang selama cast berjalan; hentikan cast dulu.
+- Android dan iOS: pasang versi baru secara manual dari halaman Releases.
 
 ## Mengatasi masalah
 
