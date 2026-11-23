@@ -1,0 +1,70 @@
+{
+  "name": "argocast",
+  "productName": "argocast",
+  "version": "0.1.0",
+  "description": "Screen-cast sender compatible with Lango/XBH interactive panels (LRTSP/2.0).",
+  "author": "argocast",
+  "type": "module",
+  "main": "electron/main.js",
+  "bin": {
+    "argocast": "src/cli.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "app": "electron .",
+    "smoke": "node scripts/smoke.js",
+    "icon": "electron scripts/make-icon.js",
+    "dist": "electron-builder --win nsis",
+    "mock-panel": "node mock/panel.js",
+    "cast": "node src/cli.js cast",
+    "discover": "node src/cli.js discover"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "multicast-dns": "^7.2.5"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "26.18.1",
+    "ffmpeg-static": "5.3.0"
+  },
+  "build": {
+    "appId": "app.argocast.sender",
+    "productName": "argocast",
+    "copyright": "argocast",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "package.json",
+      "src/**",
+      "electron/**",
+      "mock/**",
+      "build/icon.png",
+      "!**/*.test.js"
+    ],
+    "extraResources": [
+      { "from": "node_modules/ffmpeg-static/ffmpeg.exe", "to": "ffmpeg.exe" },
+      { "from": "node_modules/ffmpeg-static/LICENSE", "to": "ffmpeg-LICENSE.txt" }
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "argocast",
+      "runAfterFinish": true,
+      "artifactName": "argocast-Setup-${version}.${ext}",
+      "installerLanguages": ["id_ID", "en_US"],
+      "language": "1057"
+    }
+  }
+}

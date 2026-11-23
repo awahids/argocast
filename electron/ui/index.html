@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>argocast</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><i></i></span>
+      <span class="wordmark">argo<b>cast</b></span>
+    </div>
+    <button class="icon-btn" id="btn-settings" title="Pengaturan" aria-label="Pengaturan">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Zm7.43-2.53a7.8 7.8 0 0 0 0-1.94l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.3 7.3 0 0 0-1.68-.98l-.38-2.65A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.43l-.38 2.65c-.6.24-1.17.57-1.68.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65a7.8 7.8 0 0 0 0 1.94l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.13.22.39.31.6.22l2.49-1c.51.41 1.08.74 1.68.98l.38 2.65c.04.25.25.43.5.43h4c.25 0 .46-.18.5-.43l.38-2.65c.6-.24 1.17-.57 1.68-.98l2.49 1c.22.09.47 0 .6-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65Z"/></svg>
+    </button>
+  </header>
+
+  <div class="banner warn" id="banner-ffmpeg" hidden>
+    FFmpeg tidak ditemukan. Pasang dengan <code>winget install Gyan.FFmpeg</code>, lalu buka ulang aplikasi.
+  </div>
+
+  <!-- HOME -------------------------------------------------------------- -->
+  <main id="view-home" class="view">
+    <section class="card">
+      <div class="card-head">
+        <h2>Panel di jaringan</h2>
+        <button class="text-btn" id="btn-refresh"><span class="spinner" hidden></span><span class="label">Cari ulang</span></button>
+      </div>
+      <ul class="device-list" id="device-list"></ul>
+      <p class="empty" id="device-empty">Mencari panel…</p>
+    </section>
+
+    <section class="card" id="recent-card" hidden>
+      <div class="card-head"><h2>Terakhir dipakai</h2></div>
+      <ul class="device-list" id="recent-list"></ul>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Sambung manual</h2></div>
+      <form id="form-manual" class="form" autocomplete="off">
+        <label>Alamat IP panel
+          <input id="in-host" placeholder="192.168.1.50 atau 192.168.1.50:7000" required spellcheck="false">
+        </label>
+        <label>PIN
+          <input id="in-pin" inputmode="numeric" placeholder="Kode di layar panel" spellcheck="false">
+        </label>
+        <button class="primary" type="submit">Hubungkan</button>
+      </form>
+      <p class="hint">Laptop dan panel harus berada di jaringan yang sama.</p>
+    </section>
+  </main>
+
+  <!-- CONNECTING -------------------------------------------------------- -->
+  <main id="view-connecting" class="view center" hidden>
+    <div class="pulse"><i></i></div>
+    <h1 id="connect-title">Menghubungkan…</h1>
+    <ol class="steps" id="steps">
+      <li data-step="connecting">Menghubungi panel</li>
+      <li data-step="authenticating">Memeriksa PIN</li>
+      <li data-step="starting">Menyiapkan siaran</li>
+    </ol>
+    <button class="ghost" id="btn-cancel">Batal</button>
+  </main>
+
+  <!-- CASTING ----------------------------------------------------------- -->
+  <main id="view-casting" class="view center" hidden>
+    <div class="live"><span class="dot"></span>LIVE</div>
+    <div class="screen-art" aria-hidden="true"><i></i></div>
+    <h1>Sedang cast ke</h1>
+    <p class="target" id="cast-target">—</p>
+    <p class="timer" id="cast-timer">00:00</p>
+    <dl class="stats">
+      <div><dt>FPS</dt><dd id="st-fps">0</dd></div>
+      <div><dt>Bitrate</dt><dd id="st-kbps">0 kbps</dd></div>
+      <div><dt>Resolusi</dt><dd id="st-res">—</dd></div>
+    </dl>
+    <button class="danger" id="btn-stop">Hentikan cast</button>
+    <p class="hint">Menutup jendela tidak menghentikan cast — aplikasi tetap berjalan di system tray.</p>
+  </main>
+
+  <!-- PIN DIALOG -------------------------------------------------------- -->
+  <dialog id="dlg-pin">
+    <form method="dialog" id="form-pin" class="form">
+      <h2>Masukkan PIN</h2>
+      <p class="hint" id="pin-target"></p>
+      <input id="in-pin-dlg" class="pin-input" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off">
+      <div class="row">
+        <button value="cancel" class="ghost" formnovalidate>Batal</button>
+        <button value="ok" class="primary">Hubungkan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- SETTINGS ---------------------------------------------------------- -->
+  <dialog id="dlg-settings" class="sheet">
+    <form method="dialog" id="form-settings" class="form">
+      <h2>Pengaturan</h2>
+      <label>Nama perangkat
+        <input id="set-name" maxlength="40" spellcheck="false">
+      </label>
+      <label>Resolusi
+        <select id="set-res">
+          <option value="1920x1080">1920 × 1080 (Full HD)</option>
+          <option value="1280x720">1280 × 720 (HD)</option>
+        </select>
+      </label>
+      <label>Frame rate
+        <select id="set-fps">
+          <option value="30">30 fps</option>
+          <option value="24">24 fps</option>
+          <option value="15">15 fps</option>
+        </select>
+      </label>
+      <fieldset>
+        <legend>Kualitas</legend>
+        <div class="segmented" id="set-quality">
+          <label><input type="radio" name="quality" value="weak"><span>Jaringan lemah</span></label>
+          <label><input type="radio" name="quality" value="standard"><span>Standar</span></label>
+          <label><input type="radio" name="quality" value="enhanced"><span>Tinggi</span></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Sumber</legend>
+        <div class="segmented" id="set-source">
+          <label><input type="radio" name="source" value="desktop"><span>Layar desktop</span></label>
+          <label><input type="radio" name="source" value="test"><span>Pola uji</span></label>
+        </div>
+      </fieldset>
+      <div class="row">
+        <button value="cancel" class="ghost" formnovalidate>Tutup</button>
+        <button value="ok" class="primary">Simpan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="alert" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

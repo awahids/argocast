@@ -1,0 +1,8 @@
+node_modules/
+dist/
+smoke-output/
+# Third-party vendor installers/APKs used for analysis — never commit
+target/
+*.h264
+*.exe
+*.apk

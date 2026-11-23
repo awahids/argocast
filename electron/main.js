@@ -1,0 +1,170 @@
+// Electron main process: owns discovery, the Caster and settings.
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron';
+import path from 'node:path';
+import fs from 'node:fs';
+import os from 'node:os';
+import { fileURLToPath } from 'node:url';
+import { Caster, DEFAULT_PORT } from '../src/caster.js';
+import { discover } from '../src/discovery.js';
+import { findFfmpegAsync } from '../src/capture.js';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const SMOKE = process.env.ARGOCAST_SMOKE === '1';
+if (SMOKE) app.setPath('userData', path.join(process.env.ARGOCAST_SMOKE_DIR, 'userData')); // never touch real settings
+
+const DEFAULT_SETTINGS = {
+  deviceName: os.hostname(),
+  resolution: '1920x1080',
+  fps: 30,
+  quality: 'standard', // standard | weak | enhanced
+  source: 'desktop',   // desktop | test
+  recent: [],          // [{ host, port, name }]
+};
+const QUALITY_KBPS = { weak: 2500, standard: 5000, enhanced: 8000 };
+
+let settingsFile;
+let settings = { ...DEFAULT_SETTINGS };
+let win;
+let tray;
+const caster = new Caster();
+
+function loadSettings() {
+  settingsFile = path.join(app.getPath('userData'), 'settings.json');
+  try { settings = { ...DEFAULT_SETTINGS, ...JSON.parse(fs.readFileSync(settingsFile, 'utf8')) }; } catch { /* defaults */ }
+}
+
+function saveSettings() {
+  try { fs.mkdirSync(path.dirname(settingsFile), { recursive: true }); fs.writeFileSync(settingsFile, JSON.stringify(settings, null, 2)); } catch { /* ignore */ }
+}
+
+function send(channel, payload) {
+  if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
+}
+
+caster.on('state', (s) => {
+  send('cast:state', s);
+  updateTray(s.state);
+});
+caster.on('stats', (s) => send('cast:stats', s));
+
+function createWindow() {
+  win = new BrowserWindow({
+    width: 440,
+    height: 680,
+    minWidth: 380,
+    minHeight: 560,
+    title: 'argocast',
+    icon: path.join(here, '..', 'build', 'icon.png'),
+    backgroundColor: '#0f1115',
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(here, 'preload.cjs'),
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+    },
+  });
+  win.loadFile(path.join(here, 'ui', 'index.html'));
+  win.on('close', (e) => {
+    // Keep casting in the background when the window is closed mid-cast.
+    if (caster.busy && !app.isQuitting) { e.preventDefault(); win.hide(); }
+  });
+}
+
+function trayIcon() {
+  // 32x32 BGRA bitmap: teal rounded square with a white dot (Windows tray can't load SVG).
+  const size = 32;
+  const buf = Buffer.alloc(size * size * 4);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const i = (y * size + x) * 4;
+      const cx = Math.max(6 - x, 0, x - 25), cy = Math.max(6 - y, 0, y - 25);
+      const inside = cx * cx + cy * cy <= 36;
+      const dot = (x - 15.5) ** 2 + (y - 15.5) ** 2 <= 30;
+      if (!inside) continue;
+      const [r, g, b] = dot ? [255, 255, 255] : [0x14, 0xb8, 0xa6];
+      buf[i] = b; buf[i + 1] = g; buf[i + 2] = r; buf[i + 3] = 255;
+    }
+  }
+  return nativeImage.createFromBitmap(buf, { width: size, height: size });
+}
+
+function updateTray(state) {
+  if (!tray) return;
+  const casting = state === 'casting';
+  tray.setToolTip(casting ? 'argocast — sedang cast' : 'argocast');
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: 'Buka argocast', click: () => { win.show(); win.focus(); } },
+    { label: 'Hentikan cast', enabled: casting, click: () => caster.stop() },
+    { type: 'separator' },
+    { label: 'Keluar', click: () => { app.isQuitting = true; app.quit(); } },
+  ]));
+}
+
+// ---- IPC -----------------------------------------------------------------
+ipcMain.handle('settings:get', () => ({ ...settings, defaultPort: DEFAULT_PORT }));
+ipcMain.handle('ffmpeg:check', async () => Boolean(await findFfmpegAsync()));
+ipcMain.handle('settings:set', (_e, patch) => {
+  settings = { ...settings, ...patch };
+  saveSettings();
+  return settings;
+});
+ipcMain.handle('discover', async () => {
+  const found = await discover({ timeoutMs: 2500, onFound: (p) => send('discover:found', p) });
+  return found;
+});
+ipcMain.handle('cast:start', async (_e, { host, port, pin, name }) => {
+  const [width, height] = settings.resolution.split('x').map(Number);
+  try {
+    await caster.start({
+      host,
+      port: Number(port) || DEFAULT_PORT,
+      pin,
+      deviceName: settings.deviceName,
+      width, height,
+      fps: Number(settings.fps),
+      bitrateKbps: QUALITY_KBPS[settings.quality] ?? QUALITY_KBPS.standard,
+      source: settings.source,
+    });
+    const entry = { host, port: Number(port) || DEFAULT_PORT, name: name || host };
+    settings.recent = [entry, ...settings.recent.filter((r) => !(r.host === entry.host && r.port === entry.port))].slice(0, 5);
+    saveSettings();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, message: caster.state === 'error' ? undefined : err.message };
+  }
+});
+ipcMain.handle('cast:stop', () => caster.stop());
+ipcMain.handle('cast:status', () => ({ state: caster.state }));
+
+// ---- lifecycle --------------------------------------------------------------
+// One instance only: launching again (e.g. from the Start menu) focuses the existing window.
+if (!SMOKE && !app.requestSingleInstanceLock()) {
+  app.exit(0);
+}
+app.on('second-instance', () => { if (win) { win.show(); win.focus(); } });
+app.setAppUserModelId('app.argocast.sender');
+
+app.whenReady().then(async () => {
+  loadSettings();
+  findFfmpegAsync(); // warm up early: first run after install may wait on an antivirus scan
+  createWindow();
+  if (!SMOKE) {
+    tray = new Tray(trayIcon());
+    tray.on('click', () => { win.show(); win.focus(); });
+    updateTray('idle');
+  } else {
+    const { runSmoke } = await import('./smoke.js');
+    runSmoke({ win, app, settings });
+  }
+});
+
+app.on('before-quit', async (e) => {
+  if (caster.busy) {
+    e.preventDefault();
+    await caster.stop();
+    app.isQuitting = true;
+    app.quit();
+  }
+});
+app.on('window-all-closed', () => { if (!caster.busy) app.quit(); });
