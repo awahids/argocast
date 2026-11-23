@@ -23,11 +23,11 @@ Latest: **[v0.3.0](https://github.com/awahids/argocast/releases/tag/v0.3.0)** (p
 
 | Platform | File | Size |
 |---|---|---|
-| Windows 10/11 x64 | [argocast-Setup-0.3.0.exe](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-Setup-0.3.0.exe) | — |
-| macOS Apple Silicon (M1–M4) | [argocast-0.3.0-mac-arm64.dmg](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-mac-arm64.dmg) | — |
-| macOS Intel | [argocast-0.3.0-mac-x64.dmg](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-mac-x64.dmg) | — |
-| Android 7.0+ | [argocast-0.3.0-android.apk](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-android.apk) | — |
-| iPhone/iPad iOS 15+ (sideload) | [argocast-0.3.0-ios-unsigned.ipa](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-ios-unsigned.ipa) — sign it yourself, see [PANDUAN › iOS](docs/PANDUAN.md#ios) | — |
+| Windows 10/11 x64 | [argocast-Setup-0.3.0.exe](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-Setup-0.3.0.exe) | 137 MB |
+| macOS Apple Silicon (M1–M4) | [argocast-0.3.0-mac-arm64.dmg](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-mac-arm64.dmg) | 133 MB |
+| macOS Intel | [argocast-0.3.0-mac-x64.dmg](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-mac-x64.dmg) | 146 MB |
+| Android 7.0+ | [argocast-0.3.0-android.apk](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-android.apk) | 65 MB |
+| iPhone/iPad iOS 15+ (sideload) | [argocast-0.3.0-ios-unsigned.ipa](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-ios-unsigned.ipa) — sign it yourself, see [PANDUAN › iOS](docs/PANDUAN.md#ios) | 7 MB |
 
 Checksums: [SHA256SUMS.txt](https://github.com/awahids/argocast/releases/download/v0.3.0/SHA256SUMS.txt).
 No Node.js, FFmpeg or build needed — everything is inside the installer.
