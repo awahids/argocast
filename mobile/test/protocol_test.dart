@@ -76,7 +76,8 @@ void main() {
     setUpAll(() async {
       final root = Directory.current.parent.path; // mobile/ -> repo root
       panel = await Process.start('node', ['mock/panel.js', '--port', '$port', '--media-port', '$mediaPort', '--pin', '2468', '--no-mdns'],
-          workingDirectory: root, runInShell: Platform.isWindows);
+          // No shell: with runInShell on Windows kill() only stops cmd.exe and leaves node running.
+          workingDirectory: root);
       // Keep draining both pipes: closing them would kill node with EPIPE on its next log line.
       final ready = Completer<void>();
       panel!.stdout.transform(utf8.decoder).listen((l) {

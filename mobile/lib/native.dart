@@ -20,6 +20,23 @@ class EncodedFrame {
   final bool isKey;
 }
 
+class BroadcastStatus {
+  BroadcastStatus(this.code, this.fps, this.kbps);
+  final int code, fps, kbps;
+
+  static const idle = 0, waiting = 1, connecting = 2, authenticating = 3, starting = 4, casting = 5;
+  bool get isError => code >= 100;
+
+  String get errorMessage => switch (code) {
+        100 => 'PIN salah.',
+        101 => 'Panel sedang sibuk atau koneksi penuh.',
+        102 => 'Panel menolak (tidak diizinkan).',
+        103 => 'Panel tidak dapat dijangkau atau koneksi terputus. Pastikan satu jaringan Wi-Fi.',
+        105 => 'Cast dihentikan.',
+        _ => 'Siaran gagal. Coba lagi.',
+      };
+}
+
 class CaptureInfo {
   CaptureInfo(this.width, this.height);
   final int width;
@@ -47,6 +64,37 @@ class NativeBridge {
     });
     return CaptureInfo((r!['width'] as num).toInt(), (r['height'] as num).toInt());
   }
+
+  // ---- iOS: the panel session runs inside the Broadcast Upload Extension ----
+
+  static const _status = EventChannel('argocast/status');
+
+  /// Hands panel address, PIN and video settings to the broadcast extension.
+  static Future<void> prepareBroadcast({
+    required Panel panel,
+    required String pin,
+    required int maxSize,
+    required int fps,
+    required int bitrateKbps,
+  }) =>
+      _ch.invokeMethod('prepareBroadcast', {
+        'host': panel.host,
+        'port': panel.port,
+        'pin': pin,
+        'maxSize': maxSize,
+        'fps': fps,
+        'bitrateKbps': bitrateKbps,
+      });
+
+  /// Opens the system "Screen Broadcast" sheet with argocast preselected.
+  static Future<void> showBroadcastPicker() => _ch.invokeMethod('showBroadcastPicker');
+  static Future<void> stopBroadcast() => _ch.invokeMethod('stopBroadcast');
+
+  /// Extension status codes (see SharedConfig.swift CastStatus) plus live stats.
+  static Stream<BroadcastStatus> broadcastStatus() => _status.receiveBroadcastStream().map((e) {
+        final m = e as Map<dynamic, dynamic>;
+        return BroadcastStatus((m['status'] as num).toInt(), (m['fps'] as num).toInt(), (m['kbps'] as num).toInt());
+      });
 
   static Future<void> requestKeyFrame() => _ch.invokeMethod('requestKeyFrame');
   static Future<void> stopCapture() => _ch.invokeMethod('stopCapture');

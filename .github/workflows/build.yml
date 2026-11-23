@@ -98,14 +98,65 @@ jobs:
           path: mobile/build/argocast-*-android.apk
           if-no-files-found: error
 
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4 # Swift e2e test talks to mock/panel.js
+        with:
+          node-version: 22
+      - run: npm ci --omit=dev
+      - name: swift test (protocol + e2e against mock panel)
+        working-directory: mobile/ios/ArgocastBroadcast
+        run: swift test
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.5
+          channel: stable
+          cache: true
+      - run: flutter pub get
+        working-directory: mobile
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: add broadcast extension target (idempotent)
+        working-directory: mobile/ios
+        run: |
+          gem install xcodeproj --no-document
+          ruby scripts/add_broadcast_extension.rb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcodeproj
+          path: mobile/ios/Runner.xcodeproj/project.pbxproj
+      - name: build (unsigned)
+        working-directory: mobile
+        run: flutter build ios --release --no-codesign
+      - name: package unsigned ipa
+        working-directory: mobile
+        run: |
+          VERSION=$(node -p "require('../package.json').version")
+          APP=build/ios/iphoneos/Runner.app
+          ls "$APP/PlugIns"
+          test -d "$APP/PlugIns/ArgocastBroadcast.appex"
+          mkdir -p build/ipa/Payload
+          cp -R "$APP" build/ipa/Payload/
+          (cd build/ipa && zip -qry "../argocast-${VERSION}-ios-unsigned.ipa" Payload)
+          ls -la build/*.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios
+          path: mobile/build/argocast-*-ios-unsigned.ipa
+          if-no-files-found: error
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [windows, macos, android]
+    needs: [windows, macos, android, ios]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4 # for docs/release-notes/<tag>.md
       - uses: actions/download-artifact@v4
         with:
+          pattern: '{windows,macos,android,ios}'
           path: out
           merge-multiple: true
       - name: attach to release

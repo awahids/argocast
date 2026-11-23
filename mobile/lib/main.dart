@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -271,8 +272,10 @@ class ConnectingView extends StatelessWidget {
   const ConnectingView({super.key, required this.caster});
   final Caster caster;
 
-  static const _steps = [
-    (CastState.preparing, 'Izin merekam layar'),
+  static final _steps = [
+    Platform.isIOS
+        ? (CastState.waitingForUser, 'Ketuk "Start Broadcast"')
+        : (CastState.preparing, 'Izin merekam layar'),
     (CastState.connecting, 'Menghubungi panel'),
     (CastState.authenticating, 'Memeriksa PIN'),
     (CastState.starting, 'Menyiapkan siaran'),
@@ -280,7 +283,8 @@ class ConnectingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final current = _steps.indexWhere((s) => s.$1 == caster.state);
+    final current = caster.state == CastState.preparing ? 0 : _steps.indexWhere((s) => s.$1 == caster.state);
+    final waiting = caster.state == CastState.waitingForUser;
     return Center(
       key: const ValueKey('connecting'),
       child: Padding(
@@ -300,6 +304,20 @@ class ConnectingView extends StatelessWidget {
                       : const Icon(Icons.radio_button_unchecked),
               title: Text(_steps[i].$2),
             ),
+          if (waiting) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Di lembar "Screen Broadcast", pastikan argocast terpilih lalu ketuk Start Broadcast.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: caster.reopenPicker,
+              icon: const Icon(Icons.screen_share_outlined),
+              label: const Text('Buka lembar siaran'),
+            ),
+          ],
           const SizedBox(height: 12),
           OutlinedButton(onPressed: caster.stop, child: const Text('Batal')),
         ]),
@@ -378,7 +396,10 @@ class _CastingViewState extends State<CastingView> {
             label: const Text('Hentikan cast'),
           ),
           const SizedBox(height: 10),
-          Text('Cast tetap berjalan saat aplikasi diminimalkan. Hentikan dari sini atau dari notifikasi.',
+          Text(
+              Platform.isIOS
+                  ? 'Cast tetap berjalan saat Anda membuka aplikasi lain. Hentikan dari sini, dari indikator merah di status bar, atau Control Center.'
+                  : 'Cast tetap berjalan saat aplikasi diminimalkan. Hentikan dari sini atau dari notifikasi.',
               textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
         ]),
       ),

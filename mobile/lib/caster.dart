@@ -1,5 +1,6 @@
 // Cast controller: native capture + LRTSP session, exposed as a ChangeNotifier.
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -9,7 +10,7 @@ import 'native.dart';
 import 'protocol/session.dart';
 import 'settings.dart';
 
-enum CastState { idle, preparing, connecting, authenticating, starting, casting, stopping }
+enum CastState { idle, preparing, waitingForUser, connecting, authenticating, starting, casting, stopping }
 
 class Stats {
   const Stats({this.fps = 0, this.kbps = 0, this.frames = 0, this.dropped = 0});
@@ -17,7 +18,9 @@ class Stats {
 }
 
 class Caster extends ChangeNotifier {
-  Caster(this.settings);
+  Caster(this.settings) {
+    if (Platform.isIOS) _listenIOS();
+  }
   final Settings settings;
 
   CastState state = CastState.idle;
@@ -42,6 +45,7 @@ class Caster extends ChangeNotifier {
 
   Future<void> start(Panel panel, String pin) async {
     if (busy) return;
+    if (Platform.isIOS) return _startIOS(panel, pin);
     _cancelled = false;
     target = panel;
     try {
@@ -114,8 +118,62 @@ class Caster extends ChangeNotifier {
     _set(CastState.idle, err: message);
   }
 
+  // ---------------------------------------------------------------- iOS ---
+  // The extension owns the panel session; we only hand over the target and
+  // mirror the status it publishes.
+
+  Future<void> _startIOS(Panel panel, String pin) async {
+    target = panel;
+    try {
+      _set(CastState.preparing);
+      await NativeBridge.prepareBroadcast(
+        panel: panel,
+        pin: pin,
+        maxSize: settings.maxSize,
+        fps: settings.fps,
+        bitrateKbps: settings.bitrateKbps,
+      );
+      _set(CastState.waitingForUser);
+      await NativeBridge.showBroadcastPicker();
+    } catch (e) {
+      _set(CastState.idle, err: _friendly(e));
+    }
+  }
+
+  /// Re-opens the system broadcast sheet (if the user dismissed it).
+  Future<void> reopenPicker() => NativeBridge.showBroadcastPicker();
+
+  void _listenIOS() {
+    NativeBridge.broadcastStatus().listen((s) {
+      stats = Stats(fps: s.fps, kbps: s.kbps);
+      if (s.isError) {
+        if (state != CastState.idle) _set(CastState.idle, err: s.errorMessage);
+        return;
+      }
+      final next = switch (s.code) {
+        BroadcastStatus.connecting => CastState.connecting,
+        BroadcastStatus.authenticating => CastState.authenticating,
+        BroadcastStatus.starting => CastState.starting,
+        BroadcastStatus.casting => CastState.casting,
+        BroadcastStatus.waiting => state == CastState.idle ? CastState.idle : CastState.waitingForUser,
+        _ => CastState.idle,
+      };
+      if (next == CastState.casting && state != CastState.casting) startedAt = DateTime.now();
+      if (next != state) {
+        _set(next);
+      } else {
+        notifyListeners();
+      }
+    });
+  }
+
   Future<void> stop() async {
     if (state == CastState.idle) return;
+    if (Platform.isIOS) {
+      await NativeBridge.stopBroadcast();
+      _set(CastState.idle);
+      return;
+    }
     if (state != CastState.casting) {
       _cancelled = true;
       _session?.destroy();
