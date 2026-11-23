@@ -14,37 +14,34 @@ official clients — see [docs/](docs/):
 
 ## Download
 
-[![Download for Windows](https://img.shields.io/badge/Download-Windows%20x64%20installer-14b8a6?style=for-the-badge&logo=windows)](https://github.com/awahids/argocast/releases/download/v0.1.0/argocast-Setup-0.1.0.exe)
+Latest: **[v0.2.0](https://github.com/awahids/argocast/releases/tag/v0.2.0)** (pre-release) · [all versions](https://github.com/awahids/argocast/releases)
 
-**[argocast-Setup-0.1.0.exe](https://github.com/awahids/argocast/releases/download/v0.1.0/argocast-Setup-0.1.0.exe)**
-(137 MB, Windows 10/11 64-bit) · [release notes & all versions](https://github.com/awahids/argocast/releases)
+[![Windows](https://img.shields.io/badge/Windows-x64-14b8a6?style=for-the-badge&logo=windows)](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-Setup-0.2.0.exe)
+[![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple%20Silicon-14b8a6?style=for-the-badge&logo=apple)](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-0.2.0-mac-arm64.dmg)
+[![macOS Intel](https://img.shields.io/badge/macOS-Intel-14b8a6?style=for-the-badge&logo=apple)](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-0.2.0-mac-x64.dmg)
+[![Android](https://img.shields.io/badge/Android-APK-14b8a6?style=for-the-badge&logo=android)](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-0.2.0-android.apk)
 
+| Platform | File | Size |
+|---|---|---|
+| Windows 10/11 x64 | [argocast-Setup-0.2.0.exe](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-Setup-0.2.0.exe) | 137 MB |
+| macOS Apple Silicon (M1–M4) | [argocast-0.2.0-mac-arm64.dmg](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-0.2.0-mac-arm64.dmg) | 133 MB |
+| macOS Intel | [argocast-0.2.0-mac-x64.dmg](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-0.2.0-mac-x64.dmg) | 146 MB |
+| Android 7.0+ | [argocast-0.2.0-android.apk](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-0.2.0-android.apk) | 49 MB |
+| iOS | — | planned |
+
+Checksums: [SHA256SUMS.txt](https://github.com/awahids/argocast/releases/download/v0.2.0/SHA256SUMS.txt).
 No Node.js, FFmpeg or build needed — everything is inside the installer.
 
-1. Run `argocast-Setup-0.1.0.exe`. The installer is not code-signed yet: on
+**Windows**
+
+1. Run `argocast-Setup-0.2.0.exe`. The installer is not code-signed yet: on
    **"Windows protected your PC"** click **More info → Run anyway**.
 2. Follow the wizard (no admin rights needed).
 3. Open **argocast** from the Desktop or Start Menu.
 
-Command-line download:
-
 ```powershell
-Invoke-WebRequest -Uri https://github.com/awahids/argocast/releases/download/v0.1.0/argocast-Setup-0.1.0.exe -OutFile "$env:USERPROFILE\Downloads\argocast-Setup-0.1.0.exe"
+Invoke-WebRequest -Uri https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-Setup-0.2.0.exe -OutFile "$env:USERPROFILE\Downloads\argocast-Setup-0.2.0.exe"
 ```
-
-SHA-256: `84fe164ab6b2f3b94419035920a124c9be2d84869e7eeefc8bf485eef07dd988`
-
-### Other platforms
-
-All installers are on the [Releases page](https://github.com/awahids/argocast/releases).
-
-| Platform | File | Notes |
-|---|---|---|
-| Windows 10/11 x64 | `argocast-Setup-<version>.exe` | see above |
-| macOS Apple Silicon (M1–M4) | `argocast-<version>-mac-arm64.dmg` | macOS 11+ |
-| macOS Intel | `argocast-<version>-mac-x64.dmg` | macOS 11+ |
-| Android 7.0+ | `argocast-<version>-android.apk` | sideload |
-| iOS | — | planned |
 
 **macOS** — the app is not notarized by Apple yet, so the first launch is blocked:
 
