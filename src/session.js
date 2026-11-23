@@ -34,13 +34,18 @@ export class LrtspSession extends EventEmitter {
     this.encoder = null;
   }
 
-  connect() {
+  connect({ timeoutMs = this.timeoutMs } = {}) {
     return new Promise((resolve, reject) => {
       const sock = net.connect({ host: this.host, port: this.port });
       sock.setNoDelay(true);
-      const fail = (err) => reject(err);
+      const timer = setTimeout(() => {
+        sock.destroy();
+        reject(Object.assign(new Error(`connect timeout ${this.host}:${this.port}`), { code: 'ETIMEDOUT' }));
+      }, timeoutMs);
+      const fail = (err) => { clearTimeout(timer); reject(err); };
       sock.once('error', fail);
       sock.once('connect', () => {
+        clearTimeout(timer);
         sock.off('error', fail);
         sock.on('error', (err) => this.#onClose(err));
         sock.on('close', () => this.#onClose());

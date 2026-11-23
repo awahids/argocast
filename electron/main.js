@@ -113,11 +113,12 @@ ipcMain.handle('discover', async () => {
   const found = await discover({ timeoutMs: 2500, onFound: (p) => send('discover:found', p) });
   return found;
 });
-ipcMain.handle('cast:start', async (_e, { host, port, pin, name }) => {
+ipcMain.handle('cast:start', async (_e, { host, port, pin, name, code }) => {
   const [width, height] = settings.resolution.split('x').map(Number);
   try {
     await caster.start({
       host,
+      code,
       port: Number(port) || DEFAULT_PORT,
       pin,
       deviceName: settings.deviceName,
@@ -126,7 +127,8 @@ ipcMain.handle('cast:start', async (_e, { host, port, pin, name }) => {
       bitrateKbps: QUALITY_KBPS[settings.quality] ?? QUALITY_KBPS.standard,
       source: settings.source,
     });
-    const entry = { host, port: Number(port) || DEFAULT_PORT, name: name || host };
+    const t = caster.target; // resolved host when a share code was used
+    const entry = { host: t.host, port: t.port, name: code ? `Panel ${t.host}` : (name || t.host) };
     settings.recent = [entry, ...settings.recent.filter((r) => !(r.host === entry.host && r.port === entry.port))].slice(0, 5);
     saveSettings();
     return { ok: true };

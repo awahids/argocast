@@ -39,17 +39,18 @@
     </section>
 
     <section class="card">
-      <div class="card-head"><h2>Sambung manual</h2></div>
+      <div class="card-head"><h2>Sambung dengan kode</h2></div>
       <form id="form-manual" class="form" autocomplete="off">
-        <label>Alamat IP panel
-          <input id="in-host" placeholder="192.168.1.50 atau 192.168.1.50:7000" required spellcheck="false">
+        <label>Kode di layar panel
+          <input id="in-host" class="code-input" placeholder="834 109" required spellcheck="false">
         </label>
-        <label>PIN
-          <input id="in-pin" inputmode="numeric" placeholder="Kode di layar panel" spellcheck="false">
+        <label id="pin-row" hidden>PIN
+          <input id="in-pin" inputmode="numeric" placeholder="Kode PIN di layar panel" spellcheck="false">
         </label>
         <button class="primary" type="submit">Hubungkan</button>
       </form>
-      <p class="hint">Laptop dan panel harus berada di jaringan yang sama.</p>
+      <p class="hint">Ketik kode yang tampil di layar panel. Bisa juga alamat IP panel (mis. 192.168.1.50).
+        Laptop dan panel harus berada di jaringan yang sama.</p>
     </section>
   </main>
 

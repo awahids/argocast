@@ -43,8 +43,10 @@ export async function runSmoke({ win, app, settings }) {
     await wait(1500);
     result.homeAfterStop = await js(`!document.getElementById('view-home').hidden`);
 
-    // wrong PIN path
-    await js(`document.getElementById('in-host').value = '127.0.0.1:38554'; document.getElementById('in-pin').value = '0000'`);
+    // wrong PIN path (IP typed -> PIN field appears)
+    await js(`const h = document.getElementById('in-host'); h.value = '127.0.0.1:38554'; h.dispatchEvent(new Event('input'));
+              document.getElementById('in-pin').value = '0000'`);
+    result.pinFieldShownForIp = await js(`!document.getElementById('pin-row').hidden`);
     await js(`document.querySelector('#form-manual button[type=submit]').click()`);
     await wait(1500);
     await shot('4-wrong-pin');

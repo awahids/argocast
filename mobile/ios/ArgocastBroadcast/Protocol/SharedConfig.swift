@@ -75,20 +75,30 @@ public enum SharedConfig {
 
     // MARK: notify state
 
+    // notifyd drops a name's state once no process holds a token for it, so the
+    // writer keeps its tokens for the life of the process (never cancelled).
+    private static var tokens: [String: Int32] = [:]
+    private static let tokenLock = NSLock()
+
+    private static func token(_ name: String) -> Int32? {
+        tokenLock.lock(); defer { tokenLock.unlock() }
+        if let t = tokens[name] { return t }
+        var t: Int32 = 0
+        guard notify_register_check(name, &t) == UInt32(NOTIFY_STATUS_OK) else { return nil }
+        tokens[name] = t
+        return t
+    }
+
     public static func set(_ name: String, _ value: UInt64, post: Bool = false) {
-        var token: Int32 = 0
-        guard notify_register_check(name, &token) == UInt32(NOTIFY_STATUS_OK) else { return }
-        notify_set_state(token, value)
-        notify_cancel(token)
+        guard let t = token(name) else { return }
+        notify_set_state(t, value)
         if post { notify_post(name) }
     }
 
     public static func get(_ name: String) -> UInt64 {
-        var token: Int32 = 0
+        guard let t = token(name) else { return 0 }
         var value: UInt64 = 0
-        guard notify_register_check(name, &token) == UInt32(NOTIFY_STATUS_OK) else { return 0 }
-        notify_get_state(token, &value)
-        notify_cancel(token)
+        notify_get_state(t, &value)
         return value
     }
 

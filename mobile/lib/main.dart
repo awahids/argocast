@@ -3,12 +3,13 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'caster.dart';
 import 'native.dart';
+import 'protocol/sharecode.dart';
 import 'settings.dart';
 
-const _defaultPort = 8554; // real panels advertise their port over mDNS
 const _accent = Color(0xFF14B8A6);
 
 Future<void> main() async {
@@ -121,13 +122,19 @@ class _HomePageState extends State<HomePage> {
     if (pin != null) caster.start(p, pin.trim());
   }
 
+  bool get _typedIp => isIPv4(_host.text.trim().split(':').first);
+
+  /// Code ("834 109"), IP[:port] (+ PIN field) or a scanned link.
   void _connectManual() {
     final text = _host.text.trim();
     if (text.isEmpty) return;
-    final parts = text.split(':');
-    final port = parts.length > 1 ? int.tryParse(parts[1]) ?? _defaultPort : _defaultPort;
     FocusScope.of(context).unfocus();
-    caster.start(Panel(name: parts[0], host: parts[0], port: port), _pin.text.trim());
+    caster.startWithCode(text, pin: _typedIp ? _pin.text.trim() : '');
+  }
+
+  Future<void> _scanQr() async {
+    final value = await Navigator.of(context).push<String>(MaterialPageRoute(builder: (_) => const ScanPage()));
+    if (value != null && mounted) caster.startWithCode(value);
   }
 
   @override
@@ -180,28 +187,89 @@ class _HomePageState extends State<HomePage> {
         ),
         if (recent.isNotEmpty)
           _Section(title: 'Terakhir dipakai', children: [for (final p in recent) _PanelTile(panel: p, onTap: () => _askPin(p))]),
-        _Section(title: 'Sambung manual', children: [
+        _Section(title: 'Sambung dengan kode', children: [
           TextField(
             controller: _host,
-            keyboardType: TextInputType.url,
-            decoration: const InputDecoration(labelText: 'Alamat IP panel', hintText: '192.168.1.50 atau 192.168.1.50:7000'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _pin,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'PIN', hintText: 'Kode di layar panel'),
+            keyboardType: TextInputType.visiblePassword, // digits + letters + dots, no autocorrect
+            style: const TextStyle(fontSize: 20, letterSpacing: 3, fontFamily: 'monospace'),
+            onChanged: (_) => setState(() {}),
             onSubmitted: (_) => _connectManual(),
+            decoration: InputDecoration(
+              labelText: 'Kode di layar panel',
+              hintText: '834 109',
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.qr_code_scanner),
+                tooltip: 'Scan QR di layar panel',
+                onPressed: _scanQr,
+              ),
+            ),
           ),
+          if (_typedIp) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _pin,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'PIN', hintText: 'Kode PIN di layar panel'),
+              onSubmitted: (_) => _connectManual(),
+            ),
+          ],
           const SizedBox(height: 12),
           FilledButton(onPressed: _connectManual, child: const Text('Hubungkan')),
           const SizedBox(height: 8),
-          Text('Ponsel dan panel harus berada di jaringan Wi-Fi yang sama.',
+          OutlinedButton.icon(onPressed: _scanQr, icon: const Icon(Icons.qr_code_scanner), label: const Text('Scan QR di layar panel')),
+          const SizedBox(height: 8),
+          Text('Ketik kode yang tampil di layar panel, atau scan QR-nya. Bisa juga alamat IP panel. '
+              'Ponsel dan panel harus berada di jaringan Wi-Fi yang sama.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
         ]),
       ]),
     );
   }
+}
+
+/// Full-screen camera that returns the first QR / barcode value.
+class ScanPage extends StatefulWidget {
+  const ScanPage({super.key});
+  @override
+  State<ScanPage> createState() => _ScanPageState();
+}
+
+class _ScanPageState extends State<ScanPage> {
+  bool _done = false;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: const Text('Scan QR di layar panel')),
+        body: Stack(children: [
+          MobileScanner(
+            onDetect: (capture) {
+              final value = capture.barcodes.map((b) => b.rawValue).whereType<String>().firstOrNull;
+              if (value == null || _done) return;
+              _done = true;
+              Navigator.of(context).pop(value);
+            },
+            errorBuilder: (context, error) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text('Kamera tidak bisa dibuka (${error.errorCode.name}). Izinkan akses kamera untuk argocast.',
+                    textAlign: TextAlign.center),
+              ),
+            ),
+          ),
+          Center(
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(border: Border.all(color: _accent, width: 3), borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+          const Align(
+            alignment: Alignment(0, .8),
+            child: Text('Arahkan kamera ke QR code di layar panel',
+                style: TextStyle(color: Colors.white, shadows: [Shadow(blurRadius: 6)])),
+          ),
+        ]),
+      );
 }
 
 class _Wordmark extends StatelessWidget {

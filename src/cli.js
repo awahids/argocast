@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // argocast CLI prototype.
 //   argocast discover
+//   argocast cast <code>   (panel share code, e.g. 834109)
 //   argocast cast <ip>[:port] [--pin 1234] [--test] [--size 1920x1080] [--fps 30] [--verbose]
 import { parseArgs } from 'node:util';
 import { discover } from './discovery.js';
 import { Caster, DEFAULT_PORT } from './caster.js';
+import { isIPv4 } from './sharecode.js';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -35,11 +37,13 @@ async function cmdDiscover() {
 }
 
 async function cmdCast() {
-  let host, port;
-  if (target) {
+  let host, port, code;
+  if (target && isIPv4(target.split(':')[0])) {
     const [h, p] = target.split(':');
     host = h;
     port = Number(values.port ?? p ?? DEFAULT_PORT);
+  } else if (target) {
+    code = positionals.slice(1).join(''); // allow "cast 834 109"
   } else {
     const [first] = await cmdDiscover();
     if (!first) process.exit(1);
@@ -58,7 +62,7 @@ async function cmdCast() {
   });
 
   await caster.start({
-    host, port, pin: values.pin, deviceName: values.name,
+    host, port, code, pin: values.pin, deviceName: values.name,
     width, height, fps: Number(values.fps), bitrateKbps: Number(values.bitrate),
     source: values.test ? 'test' : 'desktop',
   });
@@ -73,10 +77,11 @@ function help() {
 
 Usage:
   argocast discover [--timeout 3000]
+  argocast cast <code>                 (the code shown on the panel, e.g. 834109 or "834 109")
   argocast cast [<ip>[:port]] [--pin PIN] [--test] [--size WxH] [--fps N] [--bitrate KBPS] [--name NAME] [-v]
 
   --test     send an ffmpeg test pattern instead of the desktop
-  --port     LRTSP control port (default ${DEFAULT_PORT}; real panels advertise theirs over mDNS)`);
+  --port     LRTSP control port (default ${DEFAULT_PORT})`);
 }
 
 try {

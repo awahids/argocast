@@ -8,8 +8,10 @@ import { EventEmitter } from 'node:events';
 import { LrtspSession } from './session.js';
 import { startCapture, findFfmpegAsync } from './capture.js';
 import { loadIdentity } from './identity.js';
+import { LRTSP_PORT, resolveTarget } from './sharecode.js';
 
-export const DEFAULT_PORT = Number(process.env.ARGOCAST_PORT || 8554);
+// Lango panels listen on 3056 (Constant.PORT_RTSP); override for the mock panel or tests.
+export const DEFAULT_PORT = Number(process.env.ARGOCAST_PORT || LRTSP_PORT);
 
 export class Caster extends EventEmitter {
   constructor() {
@@ -28,32 +30,66 @@ export class Caster extends EventEmitter {
     return !['idle', 'error'].includes(this.state);
   }
 
+  /**
+   * Starts a cast. Either `host` (+ `port`, `pin`) or `code`: what the user
+   * typed — the panel's share code ("834 109"), an IP[:port] or an
+   * airgocast:// link. A share code is also the PIN.
+   */
   async start({
-    host, port = DEFAULT_PORT, pin, deviceName,
+    host, port = DEFAULT_PORT, pin, code, deviceName,
     width = 1920, height = 1080, fps = 30, bitrateKbps = 5000, source = 'desktop',
   }) {
     if (this.busy) throw new Error('already casting');
     const identity = loadIdentity();
     const log = (m) => this.emit('log', m);
+    let candidates = host ? [host] : [];
+    if (!host) {
+      const t = resolveTarget(code);
+      if (!t || !t.candidates.length) {
+        this.#set('error', { message: 'Kode tidak valid. Masukkan 6/8 digit kode di layar panel, atau alamat IP.' });
+        throw new Error('invalid code');
+      }
+      candidates = t.candidates;
+      port = process.env.ARGOCAST_PORT ? DEFAULT_PORT : t.port;
+      pin = pin || t.pin;
+      log(`code ${code} -> ${candidates.join(', ')}:${port}`);
+    }
     try {
-      this.#set('connecting', { host, port });
+      this.#set('connecting', { host: candidates[0], port });
       // Resolve ffmpeg before talking to the panel (non-blocking; fail early if missing).
       const ffmpeg = await findFfmpegAsync();
       if (!ffmpeg) throw new Error('FFmpeg tidak ditemukan. Pasang FFmpeg lalu coba lagi.');
-      const session = new LrtspSession({
-        host, port,
-        deviceName: deviceName || identity.deviceName || os.hostname(),
-        uuid: identity.uuid,
-        log,
-      });
-      this.session = session;
+
+      // A 6/8-digit code only fixes the last two octets; try each local /16 prefix.
+      let session;
+      let lastErr;
+      for (const candidate of candidates) {
+        const s = new LrtspSession({
+          host: candidate, port,
+          deviceName: deviceName || identity.deviceName || os.hostname(),
+          uuid: identity.uuid,
+          log,
+        });
+        this.session = s;
+        try {
+          await s.connect({ timeoutMs: candidates.length > 1 ? 2500 : 8000 });
+          session = s;
+          host = candidate;
+          break;
+        } catch (err) {
+          lastErr = err;
+          if (this.cancelled) throw err;
+        }
+      }
+      if (!session) throw lastErr;
+      this.target = { host, port };
+      this.#set('connecting', { host, port });
       session.on('close', (err) => {
         // Ignore closes of sessions we already abandoned (failed start, stop()).
         if (this.session !== session || this.state === 'stopping' || this.state === 'idle') return;
         this.#teardownLocal();
         this.#set('error', { message: err ? `Koneksi terputus: ${err.message}` : 'Panel menutup koneksi.' });
       });
-      await session.connect();
 
       this.#set('authenticating');
       const opt = await session.authenticate(pin);

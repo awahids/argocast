@@ -8,6 +8,8 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>argocast</string>
+	<key>NSCameraUsageDescription</key>
+	<string>argocast memakai kamera untuk memindai QR code di layar panel.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>argocast mencari dan terhubung ke panel interaktif di jaringan lokal Anda.</string>
 	<key>NSBonjourServices</key>

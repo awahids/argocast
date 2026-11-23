@@ -97,12 +97,31 @@ async function connect(target, pin) {
   if (!res.ok && res.message) { toast(res.message); show('home'); }
 }
 
+const looksLikeIp = (s) => /^\d{1,3}(\.\d{1,3}){3}(:\d+)?$/.test(s.trim());
+
+// The PIN field is only needed when an IP is typed; a panel code is its own PIN.
+$('in-host').addEventListener('input', () => { $('pin-row').hidden = !looksLikeIp($('in-host').value); });
+
 $('form-manual').addEventListener('submit', (e) => {
   e.preventDefault();
-  const { host, port } = parseHost($('in-host').value);
-  if (!host) return;
-  connect({ host, port, name: host }, $('in-pin').value.trim());
+  const text = $('in-host').value.trim();
+  if (!text) return;
+  if (looksLikeIp(text)) {
+    const { host, port } = parseHost(text);
+    connect({ host, port, name: host }, $('in-pin').value.trim());
+  } else {
+    connectCode(text);
+  }
 });
+
+async function connectCode(code) {
+  current = { name: `Panel ${code}`, code };
+  $('connect-title').textContent = `Menghubungkan dengan kode ${code}…`;
+  for (const li of $('steps').children) li.className = '';
+  show('connecting');
+  const res = await api.start({ code });
+  if (!res.ok && res.message) { toast(res.message); show('home'); }
+}
 
 $('btn-refresh').addEventListener('click', scan);
 $('btn-cancel').addEventListener('click', () => api.stop());

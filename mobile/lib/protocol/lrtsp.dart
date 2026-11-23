@@ -40,13 +40,13 @@ class RequestBuilder {
       '$method lrtsp://$serverIp $lrtspVersion$_crlf' 'Cseq: ${seq++}$_crlf';
 
   String options({String? pin}) {
-    pin = normalizePin(pin);
+    final code = normalizePin(pin);
     final body = StringBuffer()
       ..write('Version: $version$_crlf')
       ..write('Os: $os$_crlf')
       ..write('Model: $deviceName$_crlf')
       ..write('uuid: $uuid$_crlf')
-      ..write('Code: ${pin ?? ''}$_terminator');
+      ..write('Code: $code$_terminator');
     final b = body.toString();
     final msg = StringBuffer(_head('OPTIONS'));
     if (ssrc.isNotEmpty) msg.write('SSRC: $ssrc$_crlf');

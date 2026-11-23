@@ -4,7 +4,7 @@
 // state machine, PIN check, media port that decodes 16-byte framed H.264.
 // Responses are our best reconstruction; a real panel may differ in details.
 //
-//   node mock/panel.js [--port 8554] [--media-port 8555] [--pin 1234] [--out received.h264] [--no-mdns]
+//   node mock/panel.js [--port 3056] [--media-port 8899] [--pin 1234] [--out received.h264] [--no-mdns]
 import net from 'node:net';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -16,7 +16,7 @@ import { FrameDecoder, FRAME_KEY } from '../src/frame.js';
 const PUBLIC = 'ACTIVE,MODERATOR_CONTROL,ANNOUNCE,DESCRIBE,SETUP,PLAY,BYE,TEARDOWN,FILE_ANNOUNCE,FILE_SETUP,FILE_PLAY';
 
 export function startMockPanel({
-  port = 8554, mediaPort = 8555, pin = '', out = null, mdns = true, name = 'Argocast Mock Panel', log = console.log,
+  port = 3056, mediaPort = 8899, pin = '', out = null, mdns = true, name = 'Argocast Mock Panel', log = console.log,
 } = {}) {
   const stats = { sessions: 0, frames: 0, keyFrames: 0, bytes: 0, lastAnnounce: null, requests: [] };
   const outFile = out ? fs.createWriteStream(out) : null;
@@ -144,8 +144,8 @@ async function advertise({ name, port, log }) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { values } = parseArgs({
     options: {
-      port: { type: 'string', default: '8554' },
-      'media-port': { type: 'string', default: '8555' },
+      port: { type: 'string', default: '3056' },
+      'media-port': { type: 'string', default: '8899' },
       pin: { type: 'string', default: '' },
       out: { type: 'string' },
       'no-mdns': { type: 'boolean', default: false },

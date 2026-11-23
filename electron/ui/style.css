@@ -129,6 +129,7 @@ dialog {
 }
 dialog::backdrop { background: rgba(5, 7, 10, .55); }
 dialog.sheet { width: min(400px, calc(100vw - 24px)); }
+.code-input { font-size: 20px; letter-spacing: .15em; font-family: Consolas, monospace; }
 .pin-input { font-size: 26px; letter-spacing: .35em; text-align: center; font-family: Consolas, monospace; }
 
 /* connecting */

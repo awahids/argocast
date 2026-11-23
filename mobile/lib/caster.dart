@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 
 import 'native.dart';
 import 'protocol/session.dart';
+import 'protocol/sharecode.dart';
 import 'settings.dart';
 
 enum CastState { idle, preparing, waitingForUser, connecting, authenticating, starting, casting, stopping }
@@ -41,6 +42,27 @@ class Caster extends ChangeNotifier {
     state = s;
     error = err;
     notifyListeners();
+  }
+
+  /// What the user typed or scanned: the panel's share code ("834 109"),
+  /// an IP[:port] (then [pin] is used) or an airgocast:// / airgo.link QR link.
+  Future<void> startWithCode(String input, {String pin = ''}) async {
+    if (busy) return;
+    final t = resolveTarget(input, await localIPv4s());
+    if (t == null || t.candidates.isEmpty) {
+      _set(CastState.idle, err: 'Kode tidak valid. Masukkan kode di layar panel (6 atau 8 karakter) atau alamat IP.');
+      return;
+    }
+    target = Panel(name: t.name ?? 'Panel ${input.trim()}', host: t.candidates.first, port: t.port);
+    _set(CastState.connecting);
+    // 6/8-digit codes only fix the last two octets: probe one candidate per local /16.
+    final host = await firstReachable(t.candidates, t.port);
+    if (host == null) {
+      _set(CastState.idle, err: 'Panel dengan kode ini tidak ditemukan. Pastikan ponsel dan panel di jaringan Wi-Fi yang sama.');
+      return;
+    }
+    state = CastState.idle; // hand over to the normal flow
+    await start(Panel(name: t.name ?? 'Panel $host', host: host, port: t.port), t.pin.isNotEmpty ? t.pin : pin);
   }
 
   Future<void> start(Panel panel, String pin) async {
