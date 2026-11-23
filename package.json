@@ -15,6 +15,7 @@
     "smoke": "node scripts/smoke.js",
     "icon": "electron scripts/make-icon.js",
     "dist": "electron-builder --win nsis",
+    "dist:mac": "electron-builder --mac dmg",
     "mock-panel": "node mock/panel.js",
     "cast": "node src/cli.js cast",
     "discover": "node src/cli.js discover"
@@ -46,13 +47,33 @@
       "build/icon.png",
       "!**/*.test.js"
     ],
-    "extraResources": [
-      { "from": "node_modules/ffmpeg-static/ffmpeg.exe", "to": "ffmpeg.exe" },
-      { "from": "node_modules/ffmpeg-static/LICENSE", "to": "ffmpeg-LICENSE.txt" }
-    ],
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "extraResources": [
+        { "from": "node_modules/ffmpeg-static/ffmpeg.exe", "to": "ffmpeg.exe" },
+        { "from": "node_modules/ffmpeg-static/LICENSE", "to": "ffmpeg-LICENSE.txt" }
+      ]
+    },
+    "mac": {
+      "target": [{ "target": "dmg" }],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "extraResources": [
+        { "from": "node_modules/ffmpeg-static/ffmpeg", "to": "ffmpeg" },
+        { "from": "node_modules/ffmpeg-static/LICENSE", "to": "ffmpeg-LICENSE.txt" }
+      ],
+      "extendInfo": {
+        "NSLocalNetworkUsageDescription": "argocast mencari dan terhubung ke panel interaktif di jaringan lokal Anda.",
+        "NSBonjourServices": ["_airgo._tcp"],
+        "LSApplicationCategoryType": "public.app-category.productivity"
+      }
+    },
+    "dmg": {
+      "artifactName": "argocast-${version}-mac-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,

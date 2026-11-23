@@ -47,6 +47,36 @@ export function findFfmpegAsync() {
   return pendingFfmpeg;
 }
 
+/** ffmpeg input arguments that grab the main display on this OS. */
+export function desktopInput({ ffmpeg, fps, platform = process.platform }) {
+  if (platform === 'win32') {
+    return ['-f', 'gdigrab', '-framerate', String(fps), '-draw_mouse', '1', '-i', 'desktop'];
+  }
+  if (platform === 'darwin') {
+    // macOS asks for Screen Recording permission the first time (System Settings ›
+    // Privacy & Security › Screen Recording › argocast).
+    const index = macScreenIndex(ffmpeg);
+    return ['-f', 'avfoundation', '-capture_cursor', '1', '-framerate', String(fps), '-i', `${index}:none`];
+  }
+  // Linux/X11 fallback
+  return ['-f', 'x11grab', '-framerate', String(fps), '-draw_mouse', '1', '-i', process.env.DISPLAY || ':0.0'];
+}
+
+/**
+ * avfoundation numbers cameras first and screens after them ("[2] Capture screen 0"),
+ * so the screen index differs per Mac. Parse the device list once.
+ */
+export function macScreenIndex(ffmpeg) {
+  const r = spawnSync(ffmpeg, ['-hide_banner', '-f', 'avfoundation', '-list_devices', 'true', '-i', ''], { encoding: 'utf8' });
+  return parseMacScreenIndex(`${r.stdout ?? ''}${r.stderr ?? ''}`);
+}
+
+export function parseMacScreenIndex(listing) {
+  const video = listing.split(/AVFoundation audio devices/i)[0];
+  const m = /\[(\d+)\]\s+Capture screen 0/i.exec(video);
+  return m ? Number(m[1]) : 1;
+}
+
 /**
  * Starts ffmpeg and calls onAccessUnit({ data, isKey }) for each frame.
  * source: 'desktop' (Windows gdigrab) or 'test' (synthetic test pattern).
@@ -66,7 +96,7 @@ export function startCapture({
 
   const input = source === 'test'
     ? ['-re', '-f', 'lavfi', '-i', `testsrc2=size=${width}x${height}:rate=${fps}`]
-    : ['-f', 'gdigrab', '-framerate', String(fps), '-draw_mouse', '1', '-i', 'desktop'];
+    : desktopInput({ ffmpeg, fps });
 
   const args = [
     '-hide_banner', '-loglevel', 'error',

@@ -73,7 +73,10 @@ export class Caster extends EventEmitter {
         },
         onExit: (code) => {
           if (code && this.state === 'casting') {
-            this.stop().finally(() => this.#set('error', { message: `FFmpeg berhenti (kode ${code}).` }));
+            const hint = process.platform === 'darwin'
+              ? ' Pastikan argocast diizinkan di System Settings › Privacy & Security › Screen Recording, lalu buka ulang aplikasi.'
+              : '';
+            this.stop().finally(() => this.#set('error', { message: `Tangkap layar gagal (FFmpeg kode ${code}).${hint}` }));
           }
         },
       });

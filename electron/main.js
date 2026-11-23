@@ -168,3 +168,5 @@ app.on('before-quit', async (e) => {
   }
 });
 app.on('window-all-closed', () => { if (!caster.busy) app.quit(); });
+// macOS: clicking the Dock icon reopens the (hidden) window.
+app.on('activate', () => { if (win) { win.show(); win.focus(); } });
