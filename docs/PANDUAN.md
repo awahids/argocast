@@ -180,6 +180,17 @@ Anda boleh beralih ke aplikasi lain; cast tetap berjalan:
   Isi seluruh layar ikut terkirim, termasuk notifikasi — aktifkan *Focus / Do Not Disturb* bila perlu.
   Saat ini gambar dikirim dalam posisi **tegak (portrait)**; rotasi lanskap belum didukung.
 
+### Touchback (Windows & macOS)
+
+Saat cast dari laptop, Anda bisa **mengendalikan laptop dengan menyentuh panel**:
+ketuk = klik kiri, geser = drag, tekan lama (≥ ½ detik) = klik kanan, tombol panah/OK di
+remote panel = tombol panah/Enter. Layar LIVE menampilkan **TOUCHBACK ACTIVE** saat aktif.
+
+- Nonaktifkan di **Pengaturan › Touchback** bila tidak diinginkan.
+- **macOS:** izinkan argocast di *System Settings › Privacy & Security › **Accessibility***,
+  lalu buka ulang aplikasi.
+- Belum tersedia di Android/iOS.
+
 ## 4. Menghentikan cast
 
 - Ketuk **Hentikan cast** di layar LIVE, **atau**

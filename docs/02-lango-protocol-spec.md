@@ -177,6 +177,32 @@ Format sama dengan **RTMP chunk stream**:
 - **Enkripsi:** panel mengirim `a=aeskey`; tidak ada kelas AES di kode Java [O] → kemungkinan dipakai di library native atau tidak dipakai di versi ini [?].
 - Windows memakai jalur lain (RTP PT 116 via `obs-lango.dll`) [O]; panel kemungkinan menerima keduanya [I].
 
+## 4c. Touchback — sentuhan panel → pengirim [O, obs-lango.dll `LGFeedBack::onRecvCommond` + Android `TouchReadRunnable`]
+
+Pengirim membuka **TCP ke `control_port`** dari header `Transport` (default 38767) setelah PLAY, lalu hanya membaca:
+
+```
+u8 type, u8 n
+type 3              -> tombol; n = keycode Android
+                       (0x13 ↑, 0x14 ↓, 0x15 ←, 0x16 →, 0x17 OK/Enter, 0x5c/0x5d page)
+type 0 (sentuh)     -> n (1..10) titik × 6 byte:
+type lain (mouse)      u8 id (7 bit), u8 aksi (0 down, 1 up, 2 move),
+                       u16 x, u16 y  big-endian, 0..65535 relatif layar pengirim
+```
+
+Windows menyuntikkan dengan `InjectTouchInput` (POINTER_FLAG_DOWN|INRANGE|INCONTACT = 0x10006, UP 0x40000,
+UPDATE 0x20006); tekan lama > 500 ms tanpa geser (< 4 px) → klik kanan (`mouse_event` 8/0x10).
+Tombol: keycode Android → VK (`↑ 0x26, ↓ 0x28, ← 0x25, → 0x27, OK 0x0D, 0x5c → VK_NEXT, 0x5d → VK_PRIOR`).
+Android: paket yang sama lewat `TouchServer` + `type 6` (volume) dan `type 4` (pesan JSON, panjang u24).
+
+argocast: `src/touchback.js` (parser, pemetaan letterbox, emulasi mouse) + helper `src/inject/` (SendInput / CGEvent).
+
+## 4d. Audio [O/?]
+
+`obs-lango.dll` mengirim `AudioOn=integer:1` di ANNOUNCE (SDP sama dengan Android), dan SendKit punya
+`m=audio 0 LRTP/AVP 116` / `audio/aac`. **Cara frame AAC dikirim belum ditemukan** — tidak ada magic 0xE8 di
+obs-lango; kemungkinan lewat jalur RTP SendKit [?]. Android (Wi-Fi) tidak mengirim audio sama sekali.
+
 ## 5. LRTCP — paket status (14 byte) [O, Windows `FUN_10001e60`]
 ```
 0  u32 BE  id sesi
