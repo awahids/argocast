@@ -3,6 +3,7 @@
 // (notify_set_state / notify_get_state), which both processes can read.
 import Darwin
 import Foundation
+import notify
 
 public struct CastConfig: Equatable {
     public var ipv4: String

@@ -17,6 +17,11 @@ export const STATUS = Object.freeze({
   BUSY: '501',
 });
 
+/** Panels show the PIN grouped ("834 109"); only the digits are sent. */
+export function normalizePin(pin) {
+  return String(pin ?? '').replace(/\D/g, '');
+}
+
 function requestLine(method, serverIp) {
   return `${method} lrtsp://${serverIp} ${VERSION}${CRLF}`;
 }
@@ -39,6 +44,7 @@ export class RequestBuilder {
 
   options({ pin } = {}) {
     let body = `Version: ${this.version}${CRLF}`;
+    pin = normalizePin(pin);
     body += `Os: ${this.os}${CRLF}`;
     body += `Model: ${this.deviceName}${CRLF}`;
     body += `uuid: ${this.uuid}${CRLF}`;

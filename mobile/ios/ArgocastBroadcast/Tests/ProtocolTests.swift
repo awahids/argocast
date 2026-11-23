@@ -14,6 +14,10 @@ final class ProtocolTests: XCTestCase {
                        + "Content-Length: \(body.utf16.count)\r\nContent-Type: application/sdp\r\n" + body)
     }
 
+    func testPinWithSpacesIsSentAsDigits() {
+        XCTAssertTrue(rb().options(pin: "834 109").hasSuffix("\r\nCode: 834109\r\n\r"))
+    }
+
     func testCseqAndSsrc() {
         let r = rb()
         _ = r.options(pin: nil)

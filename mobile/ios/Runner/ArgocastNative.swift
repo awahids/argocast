@@ -2,6 +2,7 @@
 //  MethodChannel "argocast/native": discover, deviceName, prepareBroadcast, showBroadcastPicker, stopBroadcast
 //  EventChannel  "argocast/status": { status: Int, fps: Int, kbps: Int } published by the broadcast extension
 import Flutter
+import notify
 import ReplayKit
 import UIKit
 

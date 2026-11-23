@@ -15,6 +15,9 @@ public enum LrtspStatus {
     public static let busy = "501"
 }
 
+/// Panels show the PIN grouped ("834 109"); only the digits are sent.
+public func normalizePin(_ pin: String?) -> String { (pin ?? "").filter { $0.isASCII && $0.isNumber } }
+
 public final class RequestBuilder {
     public let serverIp: String
     public let deviceName: String
@@ -38,7 +41,8 @@ public final class RequestBuilder {
     }
 
     public func options(pin: String?) -> String {
-        let body = "Version: \(version)\(crlf)Os: \(os)\(crlf)Model: \(deviceName)\(crlf)uuid: \(uuid)\(crlf)Code: \(pin ?? "")\(terminator)"
+        let code = normalizePin(pin)
+        let body = "Version: \(version)\(crlf)Os: \(os)\(crlf)Model: \(deviceName)\(crlf)uuid: \(uuid)\(crlf)Code: \(code)\(terminator)"
         var msg = head("OPTIONS")
         if !ssrc.isEmpty { msg += "SSRC: \(ssrc)\(crlf)" }
         msg += "Content-Length: \(body.utf16.count)\(crlf)Content-Type: application/sdp\(crlf)"

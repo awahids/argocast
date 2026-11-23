@@ -15,6 +15,11 @@ test('OPTIONS matches the Android client layout', () => {
     + body);
 });
 
+test('PIN typed as shown on the panel ("834 109") is sent as digits only', () => {
+  assert.match(rb().options({ pin: ' 834 109 ' }), /\r\nCode: 834109\r\n\r$/);
+  assert.match(rb().options({ pin: '834-109' }), /\r\nCode: 834109\r\n\r$/);
+});
+
 test('Cseq increments and SSRC is sent once known', () => {
   const r = rb();
   r.options({ pin: '' });

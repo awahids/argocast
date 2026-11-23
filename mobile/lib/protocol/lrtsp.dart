@@ -16,6 +16,9 @@ class LrtspStatus {
   static const busy = '501';
 }
 
+/// Panels show the PIN grouped ("834 109"); only the digits are sent.
+String normalizePin(String? pin) => (pin ?? '').replaceAll(RegExp(r'\D'), '');
+
 class RequestBuilder {
   RequestBuilder({
     required this.serverIp,
@@ -37,6 +40,7 @@ class RequestBuilder {
       '$method lrtsp://$serverIp $lrtspVersion$_crlf' 'Cseq: ${seq++}$_crlf';
 
   String options({String? pin}) {
+    pin = normalizePin(pin);
     final body = StringBuffer()
       ..write('Version: $version$_crlf')
       ..write('Os: $os$_crlf')

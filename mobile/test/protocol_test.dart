@@ -24,6 +24,10 @@ void main() {
       );
     });
 
+    test('PIN with spaces is sent as digits only', () {
+      expect(rb().options(pin: '834 109'), endsWith('\r\nCode: 834109\r\n\r'));
+    });
+
     test('Cseq increments and SSRC follows', () {
       final r = rb();
       r.options();

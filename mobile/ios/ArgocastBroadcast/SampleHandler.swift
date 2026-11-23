@@ -2,6 +2,7 @@
 // broadcasts. The whole panel session runs here, because the main app is
 // suspended as soon as the user switches to another app.
 import Foundation
+import notify
 import ReplayKit
 import UIKit
 
