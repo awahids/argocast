@@ -14,33 +14,33 @@ official clients — see [docs/](docs/):
 
 ## Download
 
-Latest: **[v0.2.0](https://github.com/awahids/argocast/releases/tag/v0.2.0)** (pre-release) · [all versions](https://github.com/awahids/argocast/releases)
+Latest: **[v0.3.0](https://github.com/awahids/argocast/releases/tag/v0.3.0)** (pre-release) · [all versions](https://github.com/awahids/argocast/releases)
 
-[![Windows](https://img.shields.io/badge/Windows-x64-14b8a6?style=for-the-badge&logo=windows)](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-Setup-0.2.0.exe)
-[![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple%20Silicon-14b8a6?style=for-the-badge&logo=apple)](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-0.2.0-mac-arm64.dmg)
-[![macOS Intel](https://img.shields.io/badge/macOS-Intel-14b8a6?style=for-the-badge&logo=apple)](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-0.2.0-mac-x64.dmg)
-[![Android](https://img.shields.io/badge/Android-APK-14b8a6?style=for-the-badge&logo=android)](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-0.2.0-android.apk)
+[![Windows](https://img.shields.io/badge/Windows-x64-14b8a6?style=for-the-badge&logo=windows)](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-Setup-0.3.0.exe)
+[![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple%20Silicon-14b8a6?style=for-the-badge&logo=apple)](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-mac-arm64.dmg)
+[![macOS Intel](https://img.shields.io/badge/macOS-Intel-14b8a6?style=for-the-badge&logo=apple)](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-mac-x64.dmg)
+[![Android](https://img.shields.io/badge/Android-APK-14b8a6?style=for-the-badge&logo=android)](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-android.apk)
 
 | Platform | File | Size |
 |---|---|---|
-| Windows 10/11 x64 | [argocast-Setup-0.2.0.exe](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-Setup-0.2.0.exe) | 137 MB |
-| macOS Apple Silicon (M1–M4) | [argocast-0.2.0-mac-arm64.dmg](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-0.2.0-mac-arm64.dmg) | 133 MB |
-| macOS Intel | [argocast-0.2.0-mac-x64.dmg](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-0.2.0-mac-x64.dmg) | 146 MB |
-| Android 7.0+ | [argocast-0.2.0-android.apk](https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-0.2.0-android.apk) | 49 MB |
-| iOS | — | planned |
+| Windows 10/11 x64 | [argocast-Setup-0.3.0.exe](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-Setup-0.3.0.exe) | — |
+| macOS Apple Silicon (M1–M4) | [argocast-0.3.0-mac-arm64.dmg](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-mac-arm64.dmg) | — |
+| macOS Intel | [argocast-0.3.0-mac-x64.dmg](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-mac-x64.dmg) | — |
+| Android 7.0+ | [argocast-0.3.0-android.apk](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-android.apk) | — |
+| iPhone/iPad iOS 15+ (sideload) | [argocast-0.3.0-ios-unsigned.ipa](https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-0.3.0-ios-unsigned.ipa) — sign it yourself, see [PANDUAN › iOS](docs/PANDUAN.md#ios) | — |
 
-Checksums: [SHA256SUMS.txt](https://github.com/awahids/argocast/releases/download/v0.2.0/SHA256SUMS.txt).
+Checksums: [SHA256SUMS.txt](https://github.com/awahids/argocast/releases/download/v0.3.0/SHA256SUMS.txt).
 No Node.js, FFmpeg or build needed — everything is inside the installer.
 
 **Windows**
 
-1. Run `argocast-Setup-0.2.0.exe`. The installer is not code-signed yet: on
+1. Run `argocast-Setup-0.3.0.exe`. The installer is not code-signed yet: on
    **"Windows protected your PC"** click **More info → Run anyway**.
 2. Follow the wizard (no admin rights needed).
 3. Open **argocast** from the Desktop or Start Menu.
 
 ```powershell
-Invoke-WebRequest -Uri https://github.com/awahids/argocast/releases/download/v0.2.0/argocast-Setup-0.2.0.exe -OutFile "$env:USERPROFILE\Downloads\argocast-Setup-0.2.0.exe"
+Invoke-WebRequest -Uri https://github.com/awahids/argocast/releases/download/v0.3.0/argocast-Setup-0.3.0.exe -OutFile "$env:USERPROFILE\Downloads\argocast-Setup-0.3.0.exe"
 ```
 
 **macOS** — the app is not notarized by Apple yet, so the first launch is blocked:
@@ -104,8 +104,8 @@ Every platform is built in the cloud by GitHub Actions
 - **Pushing a tag** `vX.Y.Z` does the same and attaches all files to that GitHub Release.
 
 ```powershell
-git tag v0.2.0
-git push origin v0.2.0
+git tag v0.3.0
+git push origin v0.3.0
 ```
 
 Local builds: `npm run dist` (Windows, on Windows), `npm run dist:mac` (on a Mac),
