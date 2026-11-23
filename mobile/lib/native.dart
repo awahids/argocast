@@ -1,5 +1,6 @@
 // Bridge to the Kotlin side (MainActivity / CaptureService / Discovery).
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 
@@ -95,6 +96,17 @@ class NativeBridge {
         final m = e as Map<dynamic, dynamic>;
         return BroadcastStatus((m['status'] as num).toInt(), (m['fps'] as num).toInt(), (m['kbps'] as num).toInt());
       });
+
+  // ---- Android touchback (TouchService, an AccessibilityService) ----
+
+  /// True while the argocast accessibility service is enabled and bound.
+  static Future<bool> touchbackEnabled() async => await _ch.invokeMethod<bool>('touchbackEnabled') ?? false;
+  static Future<void> openAccessibilitySettings() => _ch.invokeMethod('openAccessibilitySettings');
+
+  /// Points as [id, action, x, y, ...], x/y 0..65535 over the screen.
+  static Future<void> touch(Int32List points) => _ch.invokeMethod('touch', {'points': points});
+  static Future<void> key(int keycode) => _ch.invokeMethod('key', {'code': keycode});
+  static Future<void> touchReset() => _ch.invokeMethod('touchReset');
 
   static Future<void> requestKeyFrame() => _ch.invokeMethod('requestKeyFrame');
   static Future<void> stopCapture() => _ch.invokeMethod('stopCapture');

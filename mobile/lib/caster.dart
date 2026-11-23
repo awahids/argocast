@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'native.dart';
 import 'protocol/session.dart';
 import 'protocol/sharecode.dart';
+import 'protocol/touchback.dart';
 import 'settings.dart';
 
 enum CastState { idle, preparing, waitingForUser, connecting, authenticating, starting, casting, stopping }
@@ -35,6 +36,13 @@ class Caster extends ChangeNotifier {
   StreamSubscription<EncodedFrame>? _frames;
   Timer? _statsTimer;
   bool _cancelled = false;
+  FeedbackClient? _feedback;
+
+  /// Panel's touchback channel is open (Android).
+  bool touchbackConnected = false;
+
+  /// argocast's accessibility service is enabled, so touches can be injected.
+  bool touchbackReady = false;
 
   bool get busy => state != CastState.idle;
 
@@ -58,7 +66,10 @@ class Caster extends ChangeNotifier {
     // 6/8-digit codes only fix the last two octets: probe one candidate per local /16.
     final host = await firstReachable(t.candidates, t.port);
     if (host == null) {
-      _set(CastState.idle, err: 'Panel dengan kode ini tidak ditemukan. Pastikan ponsel dan panel di jaringan Wi-Fi yang sama.');
+      _set(
+        CastState.idle,
+        err: 'Panel dengan kode ini tidak ditemukan. Pastikan ponsel dan panel di jaringan Wi-Fi yang sama.',
+      );
       return;
     }
     state = CastState.idle; // hand over to the normal flow
@@ -91,18 +102,21 @@ class Caster extends ChangeNotifier {
       final s = LrtspSession(host: panel.host, port: panel.port, deviceName: settings.deviceName, uuid: settings.uuid);
       _session = s;
       await s.connect();
-      unawaited(s.closed.then((err) {
-        if (identical(_session, s) && state == CastState.casting) {
-          _fail(err == null ? 'Panel menutup koneksi.' : 'Koneksi terputus: $err');
-        }
-      }));
+      unawaited(
+        s.closed.then((err) {
+          if (identical(_session, s) && state == CastState.casting) {
+            _fail(err == null ? 'Panel menutup koneksi.' : 'Koneksi terputus: $err');
+          }
+        }),
+      );
       if (_cancelled) throw _Cancelled();
       _set(CastState.authenticating);
       await s.authenticate(pin.isEmpty ? null : pin);
       if (_cancelled) throw _Cancelled();
       _set(CastState.starting);
-      await s.startCast(width: info.width, height: info.height, framerate: settings.fps);
+      final tr = await s.startCast(width: info.width, height: info.height, framerate: settings.fps);
       await NativeBridge.requestKeyFrame();
+      if (settings.touchback) unawaited(_startTouchback(s, panel.host, tr.controlPort ?? feedbackPort));
 
       startedAt = DateTime.now();
       _startStats();
@@ -114,6 +128,57 @@ class Caster extends ChangeNotifier {
     } catch (e) {
       await _cleanup();
       _set(CastState.idle, err: _friendly(e));
+    }
+  }
+
+  // ---------------------------------------------------------- touchback ---
+
+  Future<void> _startTouchback(LrtspSession s, String host, int port) async {
+    await refreshTouchback();
+    try {
+      final fb = await FeedbackClient.connect(host, port, _onFeedback);
+      if (!identical(_session, s)) {
+        fb.close();
+        return;
+      }
+      _feedback = fb;
+      touchbackConnected = true;
+      notifyListeners();
+      unawaited(
+        fb.done.then((_) {
+          if (identical(_feedback, fb)) {
+            touchbackConnected = false;
+            notifyListeners();
+          }
+        }),
+      );
+    } catch (_) {
+      // Panels without touchback simply refuse; casting goes on.
+    }
+  }
+
+  void _onFeedback(FeedbackEvent e) {
+    if (!touchbackReady) return;
+    switch (e) {
+      case PanelTouch():
+        NativeBridge.touch(e.flatten()).ignore();
+      case PanelKey():
+        NativeBridge.key(e.keycode).ignore();
+    }
+  }
+
+  /// Re-reads whether the accessibility service is on (the user may have just enabled it).
+  Future<void> refreshTouchback() async {
+    if (!Platform.isAndroid) return;
+    bool ready;
+    try {
+      ready = await NativeBridge.touchbackEnabled();
+    } catch (_) {
+      ready = false;
+    }
+    if (ready != touchbackReady) {
+      touchbackReady = ready;
+      notifyListeners();
     }
   }
 
@@ -208,6 +273,12 @@ class Caster extends ChangeNotifier {
   Future<void> _cleanup() async {
     _statsTimer?.cancel();
     _statsTimer = null;
+    _feedback?.close();
+    _feedback = null;
+    if (touchbackConnected) {
+      touchbackConnected = false;
+      NativeBridge.touchReset().ignore();
+    }
     await _frames?.cancel();
     _frames = null;
     try {

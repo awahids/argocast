@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="touchback_label">argocast touchback</string>
+    <string name="touchback_summary">Sentuhan di panel mengendalikan ponsel saat cast</string>
+    <string name="touchback_description">Saat Anda cast ke panel interaktif, argocast meneruskan sentuhan dan tombol remote dari panel ke ponsel ini (ketuk, geser, tekan lama, kembali, home). argocast tidak membaca isi layar dan hanya aktif selama cast dengan touchback berjalan.</string>
+</resources>

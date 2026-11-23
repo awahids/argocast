@@ -180,16 +180,31 @@ Anda boleh beralih ke aplikasi lain; cast tetap berjalan:
   Isi seluruh layar ikut terkirim, termasuk notifikasi — aktifkan *Focus / Do Not Disturb* bila perlu.
   Saat ini gambar dikirim dalam posisi **tegak (portrait)**; rotasi lanskap belum didukung.
 
-### Touchback (Windows & macOS)
+### Touchback (Windows, macOS, Android)
 
-Saat cast dari laptop, Anda bisa **mengendalikan laptop dengan menyentuh panel**:
-ketuk = klik kiri, geser = drag, tekan lama (≥ ½ detik) = klik kanan, tombol panah/OK di
-remote panel = tombol panah/Enter. Layar LIVE menampilkan **TOUCHBACK ACTIVE** saat aktif.
+Saat cast, Anda bisa **mengendalikan laptop/ponsel dengan menyentuh panel**.
+Layar LIVE menampilkan **TOUCHBACK ACTIVE** saat aktif. Nonaktifkan di **Pengaturan › Touchback**
+bila tidak diinginkan.
 
-- Nonaktifkan di **Pengaturan › Touchback** bila tidak diinginkan.
+**Windows & macOS:** ketuk = klik kiri, geser = drag, tekan lama (≥ ½ detik) = klik kanan,
+tombol panah/OK di remote panel = tombol panah/Enter.
+
 - **macOS:** izinkan argocast di *System Settings › Privacy & Security › **Accessibility***,
   lalu buka ulang aplikasi.
-- Belum tersedia di Android/iOS.
+
+**Android:** ketuk, tekan lama, geser/scroll, dan cubit (zoom) dua jari.
+Tombol remote: Kembali, Home, Recent; tombol panah/OK hanya di Android 13+.
+
+- Saat pertama cast, layar LIVE menampilkan kartu **Kendalikan ponsel dari panel** → ketuk
+  **Aktifkan** → *Aksesibilitas* → **argocast touchback** → aktifkan → kembali ke argocast.
+- **Android 13+ dan sakelar abu-abu / "Restricted setting"?** Karena APK dipasang manual,
+  buka *Settings › Apps › argocast* → menu **⋮** (pojok kanan atas) → **Allow restricted settings**,
+  lalu ulangi langkah di atas.
+- Gerakan geser diputar **setelah jari diangkat** dari panel (batasan API Aksesibilitas Android),
+  jadi scroll terasa sedikit tertunda; ketuk dan tekan lama langsung.
+- argocast tidak membaca isi layar; layanan ini hanya meneruskan sentuhan dari panel.
+
+**iOS:** tidak didukung — iOS tidak mengizinkan aplikasi mengendalikan sentuhan.
 
 ## 4. Menghentikan cast
 
@@ -233,6 +248,7 @@ Ketuk ikon ⚙️ di kanan atas (tidak tersedia saat sedang cast).
 | iOS: argocast tidak ada di lembar Screen Broadcast | Ekstensi siaran belum terpasang/ditandatangani. Pastikan Bundle Identifier target *ArgocastBroadcast* = bundle id aplikasi + `.Broadcast` (lihat [iOS](#ios)), lalu pasang ulang. |
 | iOS: siaran langsung berhenti dengan pesan error | Pesan dari argocast ditampilkan iOS (mis. "PIN salah."). Perbaiki sesuai pesan lalu ulangi dari aplikasi. |
 | iOS: *"Untrusted Developer"* / aplikasi tidak bisa dibuka | **Settings › General › VPN & Device Management** → Trust. Jika sudah lewat 7 hari, pasang ulang. |
+| Android: sentuhan panel tidak berpengaruh | Pastikan **argocast touchback** aktif di Settings › Accessibility (lihat [Touchback](#touchback-windows-macos-android)). Pada Android 13+ izinkan dulu *Allow restricted settings*. |
 | iOS: panel tidak ditemukan | Izinkan **Local Network**: Settings › Privacy & Security › Local Network › argocast. |
 
 ### Mode lanjutan (Windows/macOS, command line)

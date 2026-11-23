@@ -15,7 +15,8 @@ import io.flutter.plugin.common.MethodChannel
 
 /**
  * Flutter bridge:
- *  - MethodChannel "argocast/native": discover, startCapture, requestKeyFrame, stopCapture, deviceName
+ *  - MethodChannel "argocast/native": discover, startCapture, requestKeyFrame, stopCapture, deviceName,
+ *    touchbackEnabled, openAccessibilitySettings, touch, key, touchReset (see TouchService)
  *  - EventChannel  "argocast/frames": { data: ByteArray, key: Boolean } per encoded access unit
  */
 class MainActivity : FlutterActivity() {
@@ -57,6 +58,22 @@ class MainActivity : FlutterActivity() {
                     stopService(Intent(this, CaptureService::class.java))
                     result.success(null)
                 }
+
+                "touchbackEnabled" -> result.success(TouchService.instance != null)
+
+                "openAccessibilitySettings" -> {
+                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    result.success(null)
+                }
+
+                "touch" -> {
+                    call.argument<IntArray>("points")?.let { TouchService.instance?.touch(it) }
+                    result.success(null)
+                }
+
+                "key" -> result.success(TouchService.instance?.key(call.argument<Int>("code") ?: 0) ?: false)
+
+                "touchReset" -> { TouchService.instance?.reset(); result.success(null) }
 
                 "deviceName" -> result.success(
                     Settings.Global.getString(contentResolver, "device_name") ?: "${Build.MANUFACTURER} ${Build.MODEL}",

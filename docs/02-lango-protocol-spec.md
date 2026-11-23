@@ -196,6 +196,8 @@ Tombol: keycode Android → VK (`↑ 0x26, ↓ 0x28, ← 0x25, → 0x27, OK 0x0D
 Android: paket yang sama lewat `TouchServer` + `type 6` (volume) dan `type 4` (pesan JSON, panjang u24).
 
 argocast: `src/touchback.js` (parser, pemetaan letterbox, emulasi mouse) + helper `src/inject/` (SendInput / CGEvent).
+Android: `mobile/lib/protocol/touchback.dart` + `TouchService.kt` (AccessibilityService `dispatchGesture`; jalur
+per jari direkam down→up lalu diputar sebagai satu gesture; tombol → `performGlobalAction`).
 
 ## 4d. Audio [O/?]
 

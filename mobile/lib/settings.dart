@@ -36,17 +36,21 @@ class Settings extends ChangeNotifier {
   Quality get quality => Quality.values[_prefs.getInt('quality') ?? Quality.standard.index];
   int get bitrateKbps => qualityKbps[quality]!;
 
+  /// Android: panel touches drive this phone (needs the accessibility service).
+  bool get touchback => _prefs.getBool('touchback') ?? true;
+
   List<Panel> get recent {
     final raw = _prefs.getString('recent');
     if (raw == null) return const [];
     return (jsonDecode(raw) as List).map((e) => Panel.fromJson(e as Map)).toList();
   }
 
-  Future<void> update({String? deviceName, int? maxSize, int? fps, Quality? quality}) async {
+  Future<void> update({String? deviceName, int? maxSize, int? fps, Quality? quality, bool? touchback}) async {
     if (deviceName != null && deviceName.trim().isNotEmpty) await _prefs.setString('deviceName', deviceName.trim());
     if (maxSize != null) await _prefs.setInt('maxSize', maxSize);
     if (fps != null) await _prefs.setInt('fps', fps);
     if (quality != null) await _prefs.setInt('quality', quality.index);
+    if (touchback != null) await _prefs.setBool('touchback', touchback);
     notifyListeners();
   }
 

@@ -402,7 +402,10 @@ class CastingView extends StatefulWidget {
 }
 
 class _CastingViewState extends State<CastingView> {
-  late final Timer _tick = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+  late final Timer _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+    widget.caster.refreshTouchback(); // picks up the accessibility switch when the user comes back
+    setState(() {});
+  });
 
   @override
   void dispose() {
@@ -456,6 +459,25 @@ class _CastingViewState extends State<CastingView> {
             stat('BITRATE', '${c.stats.kbps} kbps'),
             stat('RESOLUSI', c.capture == null ? '—' : '${c.capture!.width}×${c.capture!.height}'),
           ]),
+          if (Platform.isAndroid && c.settings.touchback && c.touchbackConnected) ...[
+            const SizedBox(height: 8),
+            if (c.touchbackReady)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: _accent.withValues(alpha: .14), borderRadius: BorderRadius.circular(99)),
+                child: const Text('TOUCHBACK ACTIVE',
+                    style: TextStyle(color: _accent, fontWeight: FontWeight.w700, letterSpacing: 1.2, fontSize: 12)),
+              )
+            else
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.touch_app_outlined),
+                  title: const Text('Kendalikan ponsel dari panel'),
+                  subtitle: const Text('Aktifkan "argocast touchback" di pengaturan Aksesibilitas.'),
+                  trailing: TextButton(onPressed: NativeBridge.openAccessibilitySettings, child: const Text('Aktifkan')),
+                ),
+              ),
+          ],
           const SizedBox(height: 16),
           FilledButton.icon(
             style: FilledButton.styleFrom(backgroundColor: scheme.error, minimumSize: const Size(220, 48)),
@@ -477,7 +499,7 @@ class _CastingViewState extends State<CastingView> {
 
 Future<void> showSettings(BuildContext context, Settings s) {
   final name = TextEditingController(text: s.deviceName);
-  var maxSize = s.maxSize, fps = s.fps, quality = s.quality;
+  var maxSize = s.maxSize, fps = s.fps, quality = s.quality, touchback = s.touchback;
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -518,10 +540,20 @@ Future<void> showSettings(BuildContext context, Settings s) {
             selected: {quality},
             onSelectionChanged: (v) => setLocal(() => quality = v.first),
           ),
+          if (Platform.isAndroid) ...[
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Touchback'),
+              subtitle: const Text('Sentuhan di panel mengendalikan ponsel (perlu izin Aksesibilitas).'),
+              value: touchback,
+              onChanged: (v) => setLocal(() => touchback = v),
+            ),
+          ],
           const SizedBox(height: 20),
           FilledButton(
             onPressed: () async {
-              await s.update(deviceName: name.text, maxSize: maxSize, fps: fps, quality: quality);
+              await s.update(deviceName: name.text, maxSize: maxSize, fps: fps, quality: quality, touchback: touchback);
               if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text('Simpan'),
