@@ -9,6 +9,8 @@ import { LrtspSession } from './session.js';
 import { startCapture, findFfmpegAsync } from './capture.js';
 import { loadIdentity } from './identity.js';
 import { LRTSP_PORT, resolveTarget } from './sharecode.js';
+import { FeedbackClient, TouchTranslator, FEEDBACK_PORT } from './touchback.js';
+import { startInjector } from './inject/index.js';
 
 // Lango panels listen on 3056 (Constant.PORT_RTSP); override for the mock panel or tests.
 export const DEFAULT_PORT = Number(process.env.ARGOCAST_PORT || LRTSP_PORT);
@@ -37,7 +39,7 @@ export class Caster extends EventEmitter {
    */
   async start({
     host, port = DEFAULT_PORT, pin, code, deviceName,
-    width = 1920, height = 1080, fps = 30, bitrateKbps = 5000, source = 'desktop',
+    width = 1920, height = 1080, fps = 30, bitrateKbps = 5000, source = 'desktop', touchback = true,
   }) {
     if (this.busy) throw new Error('already casting');
     const identity = loadIdentity();
@@ -131,7 +133,9 @@ export class Caster extends EventEmitter {
         stats.lastBytes = stats.bytes;
       }, 1000);
 
-      this.#set('casting', { host, port, width, height, fps, mediaPort: transport.rtp_port, ssrc: opt.ssrc });
+      if (touchback) this.#startTouchback({ host, transport, width, height, log });
+
+      this.#set('casting', { host, port, width, height, fps, mediaPort: transport.rtp_port, ssrc: opt.ssrc, touchback });
       return transport;
     } catch (err) {
       if (this.cancelled) { this.cancelled = false; this.#teardownLocal(); throw err; } // user pressed cancel
@@ -144,10 +148,31 @@ export class Caster extends EventEmitter {
     }
   }
 
+  /** Panel touches -> local mouse/keyboard (best effort: failures only get logged). */
+  async #startTouchback({ host, transport, width, height, log }) {
+    const injector = (this.makeInjector ?? startInjector)({ log });
+    if (!injector) { log('touchback: no injector for this platform'); return; }
+    this.injector = injector;
+    const screen = await injector.size;
+    if (this.injector !== injector) return; // stopped meanwhile
+    const translator = new TouchTranslator(injector, {
+      frameW: width, frameH: height, screenW: screen?.width, screenH: screen?.height,
+    });
+    const fb = new FeedbackClient({ host, port: transport.control_port || FEEDBACK_PORT, log });
+    fb.on('event', (ev) => { translator.handle(ev); this.emit('touch', ev); });
+    fb.on('connected', () => this.emit('touchback', { connected: true }));
+    fb.on('close', () => this.emit('touchback', { connected: false }));
+    this.feedback = fb.connect();
+  }
+
   #teardownLocal() {
     clearInterval(this.statsTimer);
     this.capture?.stop();
     this.capture = null;
+    this.feedback?.close();
+    this.feedback = null;
+    this.injector?.stop();
+    this.injector = null;
   }
 
   async stop() {

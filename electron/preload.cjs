@@ -18,4 +18,5 @@ contextBridge.exposeInMainWorld('argocast', {
   onFound: on('discover:found'),
   onState: on('cast:state'),
   onStats: on('cast:stats'),
+  onTouchback: on('cast:touchback'),
 });

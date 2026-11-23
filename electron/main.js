@@ -18,6 +18,7 @@ const DEFAULT_SETTINGS = {
   fps: 30,
   quality: 'standard', // standard | weak | enhanced
   source: 'desktop',   // desktop | test
+  touchback: true,     // panel touches control this computer
   recent: [],          // [{ host, port, name }]
 };
 const QUALITY_KBPS = { weak: 2500, standard: 5000, enhanced: 8000 };
@@ -46,6 +47,13 @@ caster.on('state', (s) => {
   updateTray(s.state);
 });
 caster.on('stats', (s) => send('cast:stats', s));
+caster.on('touchback', (s) => send('cast:touchback', s));
+if (SMOKE) {
+  const logFile = path.join(process.env.ARGOCAST_SMOKE_DIR, 'caster.log');
+  const w = (m) => fs.appendFileSync(logFile, `${new Date().toISOString()} ${m}\n`);
+  caster.on('log', (m) => w(String(m).slice(0, 300)));
+  caster.on('state', (s) => w(`[state] ${s.state} ${s.message ?? ''}`));
+}
 
 function createWindow() {
   win = new BrowserWindow({
@@ -126,6 +134,7 @@ ipcMain.handle('cast:start', async (_e, { host, port, pin, name, code }) => {
       fps: Number(settings.fps),
       bitrateKbps: QUALITY_KBPS[settings.quality] ?? QUALITY_KBPS.standard,
       source: settings.source,
+      touchback: settings.touchback !== false && settings.source === 'desktop',
     });
     const t = caster.target; // resolved host when a share code was used
     const entry = { host: t.host, port: t.port, name: code ? `Panel ${t.host}` : (name || t.host) };

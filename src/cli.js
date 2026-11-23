@@ -14,6 +14,7 @@ const { values, positionals } = parseArgs({
     pin: { type: 'string' },
     port: { type: 'string' },
     test: { type: 'boolean', default: false },
+    'no-touchback': { type: 'boolean', default: false },
     size: { type: 'string', default: '1920x1080' },
     fps: { type: 'string', default: '30' },
     bitrate: { type: 'string', default: '5000' },
@@ -63,6 +64,7 @@ async function cmdCast() {
 
   await caster.start({
     host, port, code, pin: values.pin, deviceName: values.name,
+    touchback: !values.test && !values['no-touchback'],
     width, height, fps: Number(values.fps), bitrateKbps: Number(values.bitrate),
     source: values.test ? 'test' : 'desktop',
   });
@@ -80,7 +82,8 @@ Usage:
   argocast cast <code>                 (the code shown on the panel, e.g. 834109 or "834 109")
   argocast cast [<ip>[:port]] [--pin PIN] [--test] [--size WxH] [--fps N] [--bitrate KBPS] [--name NAME] [-v]
 
-  --test     send an ffmpeg test pattern instead of the desktop
+  --test          send an ffmpeg test pattern instead of the desktop (touchback off)
+  --no-touchback  ignore touches coming back from the panel
   --port     LRTSP control port (default ${DEFAULT_PORT})`);
 }
 

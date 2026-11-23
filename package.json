@@ -47,6 +47,9 @@
       "build/icon.png",
       "!**/*.test.js"
     ],
+    "asarUnpack": [
+      "src/inject/**"
+    ],
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],
       "icon": "build/icon.png",

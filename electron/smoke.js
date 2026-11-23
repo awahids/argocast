@@ -31,6 +31,8 @@ export async function runSmoke({ win, app, settings }) {
     await js(`document.getElementById('in-pin-dlg').value = '2468'`);
     await shot('2-pin');
 
+    result.pinDialogOpen = await js(`document.getElementById('dlg-pin').open`);
+    result.tPinOk = new Date().toISOString();
     await js(`document.querySelector('#form-pin button[value=ok]').click()`);
     const t0 = Date.now();
     while (Date.now() - t0 < 20000 && !(await js(`!document.getElementById('view-casting').hidden`))) await wait(250);

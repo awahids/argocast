@@ -145,6 +145,7 @@ api.onState((s) => {
     show('casting');
   } else if (s.state === 'idle') {
     clearInterval(timerId);
+    $('badge-touch').hidden = true;
     show('home');
     api.getSettings().then((st) => { settings = st; renderRecent(); });
   } else if (s.state === 'error') {
@@ -153,6 +154,8 @@ api.onState((s) => {
     toast(s.message || 'Terjadi kesalahan.');
   }
 });
+
+api.onTouchback((s) => { $('badge-touch').hidden = !s.connected; });
 
 api.onStats((s) => {
   $('st-fps').textContent = s.fps;
@@ -173,6 +176,7 @@ function fillSettings() {
   $('set-fps').value = String(settings.fps);
   document.querySelector(`#set-quality input[value="${settings.quality}"]`).checked = true;
   document.querySelector(`#set-source input[value="${settings.source}"]`).checked = true;
+  $('set-touch').checked = settings.touchback !== false;
 }
 
 $('btn-settings').addEventListener('click', () => {
@@ -187,6 +191,7 @@ $('btn-settings').addEventListener('click', () => {
       fps: Number($('set-fps').value),
       quality: document.querySelector('#set-quality input:checked').value,
       source: document.querySelector('#set-source input:checked').value,
+      touchback: $('set-touch').checked,
     });
   };
   dlg.showModal();

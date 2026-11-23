@@ -16,7 +16,7 @@ import { FrameDecoder, FRAME_KEY } from '../src/frame.js';
 const PUBLIC = 'ACTIVE,MODERATOR_CONTROL,ANNOUNCE,DESCRIBE,SETUP,PLAY,BYE,TEARDOWN,FILE_ANNOUNCE,FILE_SETUP,FILE_PLAY';
 
 export function startMockPanel({
-  port = 3056, mediaPort = 8899, pin = '', out = null, mdns = true, name = 'Argocast Mock Panel', log = console.log,
+  port = 3056, mediaPort = 8899, feedbackPort = mediaPort + 2, pin = '', out = null, mdns = true, name = 'Argocast Mock Panel', log = console.log,
 } = {}) {
   const stats = { sessions: 0, frames: 0, keyFrames: 0, bytes: 0, lastAnnounce: null, requests: [] };
   const outFile = out ? fs.createWriteStream(out) : null;
@@ -54,7 +54,7 @@ export function startMockPanel({
         case 'SETUP':
           return reply('200', 'OK', {
             SSRC: ssrc, Session: ssrc,
-            Transport: `RTP/TCP/unicast;rtp_port=${mediaPort};rtcp_port=${mediaPort + 1};control_port=${port}`,
+            Transport: `RTP/TCP/unicast;rtp_port=${mediaPort};rtcp_port=${mediaPort + 1};control_port=${feedbackPort}`,
           }, cseq);
         case 'PLAY':
         case 'BYE':
@@ -89,10 +89,22 @@ export function startMockPanel({
     sock.on('error', () => {});
   });
 
+  // Touchback channel: the sender connects here; tests push touches with sendTouch()/sendKey().
+  const feedbackSockets = new Set();
+  const feedback = net.createServer((sock) => {
+    log(`[panel] touchback connection from ${sock.remoteAddress}`);
+    stats.feedbackConnections = (stats.feedbackConnections ?? 0) + 1;
+    feedbackSockets.add(sock);
+    sock.on('close', () => feedbackSockets.delete(sock));
+    sock.on('error', () => {});
+  });
+  const broadcast = (buf) => { for (const s of feedbackSockets) s.write(buf); };
+
   let mdnsServer = null;
   const ready = Promise.all([
     new Promise((r) => control.listen(port, r)),
     new Promise((r) => media.listen(mediaPort, r)),
+    new Promise((r) => feedback.listen(feedbackPort, r)),
   ]).then(async () => {
     if (mdns) mdnsServer = await advertise({ name, port, log });
     log(`[panel] listening: control ${port}, media ${mediaPort}${pin ? `, PIN ${pin}` : ''}`);
@@ -101,9 +113,12 @@ export function startMockPanel({
   return {
     ready,
     stats,
+    sendTouch: (buf) => broadcast(buf),
+    get feedbackClients() { return feedbackSockets.size; },
     close: () => Promise.all([
       new Promise((r) => control.close(r)),
       new Promise((r) => media.close(r)),
+      new Promise((r) => { for (const s of feedbackSockets) s.destroy(); feedback.close(r); }),
       new Promise((r) => (outFile ? outFile.end(r) : r())),
     ]).then(() => mdnsServer?.destroy()),
   };

@@ -68,7 +68,10 @@
 
   <!-- CASTING ----------------------------------------------------------- -->
   <main id="view-casting" class="view center" hidden>
-    <div class="live"><span class="dot"></span>LIVE</div>
+    <div class="badges">
+      <div class="live"><span class="dot"></span>LIVE</div>
+      <div class="badge" id="badge-touch" hidden>TOUCHBACK ACTIVE</div>
+    </div>
     <div class="screen-art" aria-hidden="true"><i></i></div>
     <h1>Sedang cast ke</h1>
     <p class="target" id="cast-target">—</p>
@@ -123,6 +126,9 @@
           <label><input type="radio" name="quality" value="enhanced"><span>Tinggi</span></label>
         </div>
       </fieldset>
+      <label class="check"><input type="checkbox" id="set-touch">
+        <span>Touchback — sentuhan di panel mengendalikan komputer ini</span>
+      </label>
       <fieldset>
         <legend>Sumber</legend>
         <div class="segmented" id="set-source">
