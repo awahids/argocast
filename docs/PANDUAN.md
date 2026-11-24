@@ -216,6 +216,31 @@ Tombol remote: Kembali, Home, Recent; tombol panah/OK hanya di Android 13+.
 
 Untuk keluar sepenuhnya di Windows/macOS: ikon tray → **Keluar**.
 
+## 4a. Terima cast — laptop sebagai layar (Windows & macOS)
+
+Tablet, ponsel, atau laptop lain bisa cast **ke** komputer ini, seperti ke panel.
+
+1. Di laptop: buka argocast → kartu **Terima cast** → **Mulai menerima**.
+   Muncul kode 6 digit besar, mis. **251 948** (kode ini sekaligus PIN, dan berganti tiap kali
+   mode menerima dimulai).
+2. Di tablet/ponsel: buka argocast → ketik kode tersebut → **Hubungkan**.
+   Atau pilih nama laptop dari daftar panel, lalu masukkan kode sebagai PIN.
+3. Layar tablet tampil di jendela baru di laptop.
+   - **F11** atau tombol ⛶ = layar penuh, **Esc** = keluar layar penuh.
+   - **Klik/geser mouse** di gambar = sentuhan di tablet (Android dengan touchback aktif, atau
+     laptop pengirim). **Esc**/**Backspace** = Kembali, **Home** = Home, tombol panah/Enter diteruskan.
+4. **Putuskan** (di jendela gambar atau di argocast) mengakhiri cast; **Berhenti menerima**
+   mematikan mode menerima.
+
+Catatan:
+- Saat pertama kali, **Windows Firewall** menanyakan izin untuk argocast → centang jaringan
+  **Private** → **Allow access**. Di macOS izinkan *incoming connections* bila ditanya.
+- Hanya satu pengirim sekaligus; pengirim kedua mendapat pesan panel sibuk.
+- Tidak ada suara (audio belum didukung). Laptop harus tetap menyala dan argocast terbuka
+  (boleh diminimalkan ke tray).
+- Port yang dipakai sama dengan panel Lango (3056, 8899, 38767). Jika aplikasi lain sudah
+  memakainya (mis. receiver Airgo Cast), argocast menampilkan pesan dan tidak bisa menerima.
+
 ## 5. Pengaturan
 
 Ketuk ikon ⚙️ di kanan atas (tidak tersedia saat sedang cast).

@@ -64,3 +64,16 @@ test('airgocast:// links (NFC/QR) carry pinCode and ipGroup', () => {
   // without ipGroup the PIN itself locates the panel
   assert.deepEqual(resolveTarget('https://www.airgo.link?pinCode=834109', ['192.168.1.2']).candidates, ['192.168.136.2']);
 });
+
+test('encodeSix round-trips through decodeSix for every last-two-octet pair', async () => {
+  const { encodeSix, decodeSix } = await import('../src/sharecode.js');
+  for (let v = 0; v < 65536; v += 97) {
+    const ip = `10.1.${v >> 8}.${v & 255}`;
+    for (const variant of [0, 3, 999]) {
+      const code = encodeSix(ip, variant);
+      assert.match(code, /^[1-9]\d{5}$/);
+      assert.deepEqual(decodeSix(code), [v >> 8, v & 255], `${ip} -> ${code}`);
+    }
+  }
+  assert.deepEqual(decodeSix(encodeSix('192.168.255.255', 1)), [255, 255]);
+});

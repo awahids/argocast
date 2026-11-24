@@ -1,0 +1,40 @@
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+body { font: 13px/1.4 "Segoe UI Variable", "Segoe UI", system-ui, sans-serif; color: #e8eaf0; user-select: none; }
+[hidden] { display: none !important; }
+
+#video {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; touch-action: none; cursor: crosshair; background: #000;
+}
+
+.waiting {
+  position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px;
+  color: #8b93a7; pointer-events: none;
+}
+.spin {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 3px solid rgba(20, 184, 166, .25); border-top-color: #14b8a6;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.bar {
+  position: fixed; left: 50%; top: 10px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px;
+  padding: 6px 8px 6px 14px; border-radius: 999px;
+  background: rgba(15, 17, 21, .82); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .4);
+  transition: opacity .25s, transform .25s; white-space: nowrap; max-width: calc(100% - 24px);
+}
+.bar.hide { opacity: 0; transform: translate(-50%, -12px); pointer-events: none; }
+.who { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #14b8a6; box-shadow: 0 0 0 3px rgba(20, 184, 166, .25); flex: none; }
+.hint { color: #8b93a7; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 620px) { .hint { display: none; } }
+.bar button {
+  border: 0; border-radius: 999px; padding: 5px 12px; font: inherit; cursor: pointer;
+  background: rgba(255, 255, 255, .1); color: inherit;
+}
+.bar button:hover { background: rgba(255, 255, 255, .18); }
+.bar button.end { background: #ef4444; color: #fff; }
+.bar button.end:hover { background: #dc2626; }

@@ -8,6 +8,7 @@ import { Caster, DEFAULT_PORT } from '../src/caster.js';
 import { discover } from '../src/discovery.js';
 import { findFfmpegAsync } from '../src/capture.js';
 import { Updater } from './updater.js';
+import { ReceiveMode } from './receive.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SMOKE = process.env.ARGOCAST_SMOKE === '1';
@@ -29,6 +30,9 @@ let settings = { ...DEFAULT_SETTINGS };
 let win;
 let tray;
 const caster = new Caster();
+// Smoke test: receiver on private ports so it never clashes with a real panel app.
+const receive = new ReceiveMode({ here, ...(SMOKE && { ports: { port: 39056, mediaPort: 39057, feedbackPort: 39058 } }) });
+receive.on('state', (s) => { send('rx:state', s); updateTray(caster.state); });
 const updater = new Updater({
   isBusy: () => caster.busy,
   beforeQuit: () => { app.isQuitting = true; },
@@ -87,7 +91,7 @@ function createWindow() {
   win.loadFile(path.join(here, 'ui', 'index.html'));
   win.on('close', (e) => {
     // Keep casting in the background when the window is closed mid-cast.
-    if (caster.busy && !app.isQuitting) { e.preventDefault(); win.hide(); }
+    if ((caster.busy || receive.rx) && !app.isQuitting) { e.preventDefault(); win.hide(); }
   });
 }
 
@@ -112,10 +116,11 @@ function trayIcon() {
 function updateTray(state) {
   if (!tray) return;
   const casting = state === 'casting';
-  tray.setToolTip(casting ? 'argocast — sedang cast' : 'argocast');
+  tray.setToolTip(casting ? 'argocast — sedang cast' : receive.rx ? 'argocast — menerima cast' : 'argocast');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Buka argocast', click: () => { win.show(); win.focus(); } },
     { label: 'Hentikan cast', enabled: casting, click: () => caster.stop() },
+    { label: 'Berhenti menerima', enabled: Boolean(receive.rx), click: () => receive.stop() },
     { type: 'separator' },
     { label: 'Keluar', click: () => { app.isQuitting = true; app.quit(); } },
   ]));
@@ -160,6 +165,17 @@ ipcMain.handle('cast:start', async (_e, { host, port, pin, name, code }) => {
 });
 ipcMain.handle('cast:stop', () => caster.stop());
 ipcMain.handle('cast:status', () => ({ state: caster.state }));
+// receive mode (this computer as a panel)
+ipcMain.handle('rx:get', () => receive.state);
+ipcMain.handle('rx:start', async () => {
+  try { return await receive.start({ name: settings.deviceName }); } catch (e) { return { on: false, error: e.message }; }
+});
+ipcMain.handle('rx:stop', () => receive.stop());
+ipcMain.handle('rx:player-ready', (e) => receive.playerLoaded(e.sender));
+ipcMain.on('rx:touch', (e, t) => receive.touch(e.sender, t));
+ipcMain.on('rx:key', (e, code) => receive.key(e.sender, code));
+ipcMain.on('rx:fullscreen', (e) => receive.toggleFullscreen(e.sender));
+ipcMain.on('rx:disconnect', () => receive.disconnect());
 ipcMain.handle('update:get', () => updater.state);
 ipcMain.handle('update:check', () => updater.check(true));
 ipcMain.handle('update:install', () => updater.install());
@@ -188,6 +204,12 @@ app.whenReady().then(async () => {
 });
 
 app.on('before-quit', async (e) => {
+  if (receive.rx) {
+    e.preventDefault();
+    await receive.stop();
+    app.quit();
+    return;
+  }
   if (caster.busy) {
     e.preventDefault();
     await caster.stop();
@@ -195,6 +217,6 @@ app.on('before-quit', async (e) => {
     app.quit();
   }
 });
-app.on('window-all-closed', () => { if (!caster.busy) app.quit(); });
+app.on('window-all-closed', () => { if (!caster.busy && !receive.rx) app.quit(); });
 // macOS: clicking the Dock icon reopens the (hidden) window.
 app.on('activate', () => { if (win) { win.show(); win.focus(); } });

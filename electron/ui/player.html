@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'">
+  <title>argocast</title>
+  <link rel="stylesheet" href="player.css">
+</head>
+<body>
+  <canvas id="video" width="16" height="9"></canvas>
+  <div class="waiting" id="waiting"><div class="spin"></div><p id="waiting-text">Menunggu gambar…</p></div>
+  <div class="bar" id="bar">
+    <span class="who"><span class="dot"></span><span id="peer">—</span></span>
+    <span class="hint" id="hint">Klik/geser = sentuh · Esc = kembali · F11 = layar penuh</span>
+    <button id="btn-full" title="Layar penuh (F11)">⛶</button>
+    <button id="btn-end" class="end">Putuskan</button>
+  </div>
+  <script src="player.js"></script>
+</body>
+</html>

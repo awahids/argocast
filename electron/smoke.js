@@ -2,7 +2,9 @@
 // saves screenshots. Run with: npm run smoke  (ARGOCAST_SMOKE=1)
 import fs from 'node:fs';
 import path from 'node:path';
+import { BrowserWindow } from 'electron';
 import { startMockPanel } from '../mock/panel.js';
+import { Caster } from '../src/caster.js';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -33,7 +35,7 @@ export async function runSmoke({ win, app, settings }) {
 
     result.pinDialogOpen = await js(`document.getElementById('dlg-pin').open`);
     result.tPinOk = new Date().toISOString();
-    await js(`document.querySelector('#form-pin button[value=ok]').click()`);
+    await js(`window.argocast.mark('ok click'); document.querySelector('#form-pin button[value=ok]').click(); window.argocast.mark('ok click returned')`);
     const t0 = Date.now();
     while (Date.now() - t0 < 20000 && !(await js(`!document.getElementById('view-casting').hidden`))) await wait(250);
     result.secondsToCasting = Math.round((Date.now() - t0) / 100) / 10;
@@ -59,6 +61,59 @@ export async function runSmoke({ win, app, settings }) {
     await shot('5-settings');
 
     result.panel = { requests: panel.stats.requests, frames: panel.stats.frames, keyFrames: panel.stats.keyFrames };
+
+    // ---- receive mode: another device casts to this computer -------------
+    await js(`document.querySelector('#dlg-settings').close()`);
+    await js(`document.getElementById('btn-rx-start').click()`);
+    let rx = null;
+    for (let i = 0; i < 40 && !rx?.code; i++) { await wait(100); rx = await js(`window.argocast.rxGet()`); }
+    result.rxCode = rx?.code;
+    result.rxViewVisible = await js(`!document.getElementById('view-receive').hidden`);
+    await shot('6-receive');
+
+    const sender = new Caster();
+    const touches = [];
+    sender.makeInjector = () => ({
+      size: Promise.resolve({ width: 1280, height: 720 }),
+      down: (x, y) => touches.push(['down', x, y]), move: (x, y) => touches.push(['move', x, y]),
+      up: (x, y) => touches.push(['up', x, y]), rightClick: () => touches.push(['rclick']),
+      key: (k) => touches.push(['key', k]), stop: () => {},
+    });
+    const tbConnected = new Promise((r) => sender.once('touchback', r));
+    await sender.start({ host: '127.0.0.1', port: 39056, pin: rx.code, deviceName: 'Tablet Uji', source: 'test', width: 1280, height: 720, fps: 30, bitrateKbps: 2000, touchback: true });
+    await tbConnected;
+    let player = null;
+    for (let i = 0; i < 50 && !player; i++) { await wait(100); player = BrowserWindow.getAllWindows().find((w) => w !== win); }
+    const pjs = (code) => player.webContents.executeJavaScript(code);
+    let shown = false;
+    for (let i = 0; i < 80 && !shown; i++) { await wait(100); shown = await pjs(`document.getElementById('waiting').hidden`).catch(() => false); }
+    result.playerDecoded = shown;
+    result.playerVideoSize = await pjs(`[document.getElementById('video').width, document.getElementById('video').height]`);
+    result.playerStats1 = await pjs('({ ...window.playerStats })');
+    await wait(1500);
+    result.playerStats2 = await pjs('({ ...window.playerStats })');
+    // Canvas pixels (capturePage of a WebCodecs canvas can fail with UnknownVizError).
+    const png = await pjs(`document.getElementById('video').toDataURL('image/png')`);
+    fs.writeFileSync(path.join(dir, '7-player.png'), Buffer.from(png.split(',')[1], 'base64'));
+    result.steps.push('7-player');
+    result.rxPeerShown = await js(`document.getElementById('rx-title').textContent`);
+
+    // click in the middle of the video -> touchback down/up at ~ (32768, 32768)
+    await pjs(`(() => { const c = document.getElementById('video'); const r = c.getBoundingClientRect();
+      const o = { clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, button: 0, pointerId: 1, bubbles: true };
+      c.dispatchEvent(new PointerEvent('pointerdown', o)); c.dispatchEvent(new PointerEvent('pointerup', o)); })()`);
+    await pjs(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }))`);
+    await wait(500);
+    result.touchback = touches;
+
+    await js(`document.getElementById('btn-rx-disconnect').click()`);
+    await wait(800);
+    result.playerClosedAfterDisconnect = !BrowserWindow.getAllWindows().some((w) => w !== win);
+    result.senderStateAfterDisconnect = sender.state;
+    await sender.stop();
+    await js(`document.getElementById('btn-rx-stop').click()`);
+    await wait(500);
+    result.homeAfterRxStop = await js(`!document.getElementById('view-home').hidden`);
   } catch (err) {
     result.error = String(err?.stack || err);
   } finally {

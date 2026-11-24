@@ -61,6 +61,11 @@ Invoke-WebRequest -Uri https://github.com/awahids/argocast/releases/download/v0.
 3. Accept the **screen recording** prompt. Casting continues in the background;
    stop it from the app or the notification.
 
+**Receive mode (desktop)** — the desktop app can also act as the screen: *Terima cast →
+Mulai menerima* shows a 6-digit code; a tablet/phone/laptop running argocast casts to it with
+that code. Video is decoded with WebCodecs in a separate window; mouse and keys go back to the
+sender as touchback. See [PANDUAN › Terima cast](docs/PANDUAN.md#4a-terima-cast--laptop-sebagai-layar-windows--macos).
+
 **Updates (desktop)** — from v0.4.0 the Windows and macOS apps update themselves from
 GitHub Releases: Windows downloads in the background and installs on restart; macOS asks,
 then swaps the app and relaunches. Versions up to 0.3.0 must be updated by hand once.

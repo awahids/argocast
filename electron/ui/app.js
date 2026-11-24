@@ -2,7 +2,7 @@
 const api = window.argocast;
 const $ = (id) => document.getElementById(id);
 
-const views = { home: $('view-home'), connecting: $('view-connecting'), casting: $('view-casting') };
+const views = { home: $('view-home'), connecting: $('view-connecting'), casting: $('view-casting'), receive: $('view-receive') };
 let settings = {};
 let current = null;       // { host, port, name }
 let castStart = 0;
@@ -83,7 +83,7 @@ function askPin(d) {
   $('pin-target').textContent = `${d.name} — ${d.host}:${d.port}`;
   $('in-pin-dlg').value = '';
   dlg.returnValue = '';
-  dlg.onclose = () => { if (dlg.returnValue === 'ok') connect(d, $('in-pin-dlg').value.trim()); };
+  dlg.onclose = () => { api.mark(`pin dialog closed: ${dlg.returnValue}`); if (dlg.returnValue === 'ok') connect(d, $('in-pin-dlg').value.trim()); };
   dlg.showModal();
   $('in-pin-dlg').focus();
 }
@@ -93,6 +93,7 @@ async function connect(target, pin) {
   $('connect-title').textContent = `Menghubungkan ke ${target.name}…`;
   for (const li of $('steps').children) li.className = '';
   show('connecting');
+  api.mark('connect -> api.start');
   const res = await api.start({ ...target, pin });
   if (!res.ok && res.message) { toast(res.message); show('home'); }
 }
@@ -197,6 +198,33 @@ $('btn-settings').addEventListener('click', () => {
   dlg.showModal();
 });
 
+// ---- receive mode -------------------------------------------------------------
+let rxOn = false;
+function renderRx(s) {
+  const wasOn = rxOn;
+  rxOn = Boolean(s?.on);
+  if (!rxOn) { if (wasOn) show('home'); return; }
+  $('rx-code').textContent = s.code.replace(/^(\d{3})(\d{3})$/, '$1 $2');
+  $('rx-name').textContent = s.name;
+  $('rx-name-2').textContent = s.name;
+  $('rx-ip').textContent = s.ip;
+  const peer = s.peer;
+  $('rx-badge').textContent = peer ? 'MENERIMA' : 'SIAP MENERIMA';
+  $('rx-badge').classList.toggle('live-badge', Boolean(peer));
+  $('rx-title').textContent = peer ? `Menampilkan layar ${peer.name}` : 'Cast ke komputer ini';
+  $('btn-rx-disconnect').hidden = !peer;
+  show('receive');
+}
+$('btn-rx-start').addEventListener('click', async () => {
+  $('btn-rx-start').disabled = true;
+  const s = await api.rxStart();
+  $('btn-rx-start').disabled = false;
+  if (s.error) toast(s.error); else renderRx(s);
+});
+$('btn-rx-stop').addEventListener('click', () => api.rxStop());
+$('btn-rx-disconnect').addEventListener('click', () => api.rxDisconnect());
+api.onRx(renderRx);
+
 // ---- updates ----------------------------------------------------------------
 const isMac = navigator.userAgent.includes('Mac');
 
@@ -242,5 +270,6 @@ api.onUpdate(renderUpdate);
   api.getUpdate().then(renderUpdate);
   const { state } = await api.status();
   if (state !== 'idle' && state !== 'error') show('connecting'); else show('home');
+  renderRx(await api.rxGet());
   scan();
 })();

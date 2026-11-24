@@ -57,6 +57,28 @@
       <p class="hint">Ketik kode yang tampil di layar panel. Bisa juga alamat IP panel (mis. 192.168.1.50).
         Laptop dan panel harus berada di jaringan yang sama.</p>
     </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Terima cast</h2></div>
+      <p class="hint">Jadikan komputer ini layar tujuan: tablet, ponsel, atau laptop lain bisa cast ke sini.</p>
+      <button class="ghost wide" id="btn-rx-start">Mulai menerima</button>
+    </section>
+  </main>
+
+  <!-- RECEIVE (this computer as a panel) --------------------------------- -->
+  <main id="view-receive" class="view center" hidden>
+    <div class="badge" id="rx-badge">SIAP MENERIMA</div>
+    <h1 id="rx-title">Cast ke komputer ini</h1>
+    <p class="hint">Di tablet/ponsel, buka argocast lalu ketik kode:</p>
+    <p class="rx-code" id="rx-code">— — —</p>
+    <dl class="stats rx-meta">
+      <div><dt>Nama</dt><dd id="rx-name">—</dd></div>
+      <div><dt>Alamat</dt><dd id="rx-ip">—</dd></div>
+    </dl>
+    <p class="hint" id="rx-hint">Atau pilih <b id="rx-name-2">—</b> dari daftar panel, lalu masukkan kode di atas sebagai PIN.
+      Perangkat harus di jaringan Wi-Fi yang sama.</p>
+    <button class="danger" id="btn-rx-disconnect" hidden>Putuskan</button>
+    <button class="ghost" id="btn-rx-stop">Berhenti menerima</button>
   </main>
 
   <!-- CONNECTING -------------------------------------------------------- -->

@@ -23,6 +23,20 @@ export function decodeSix(code) {
   return [v >> 8, v & 255];
 }
 
+/**
+ * 6-digit share code for this IPv4 (inverse of decodeSix), used in receiver
+ * mode. Several codes map to the same address; `variant` picks one, so the
+ * code (which is also the PIN) changes between sessions.
+ */
+export function encodeSix(ip, variant = Math.floor(Math.random() * 1e6)) {
+  const o = String(ip).split('.').map(Number);
+  const v = (o[2] << 8) | o[3];
+  const top = 1065535 - v; // what decodeSix's loop ends on
+  const choices = [];
+  for (let c = top - 65536; c >= 100000; c -= 65536) choices.push(c);
+  return String(choices[variant % choices.length]);
+}
+
 /** Last two octets from an 8-digit code (CryCodeUtils.b). */
 export function decodeEightDigits(code) {
   if (!/^\d{8}$/.test(code)) return null;

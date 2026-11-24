@@ -8,6 +8,7 @@ const on = (channel) => (cb) => {
 };
 
 contextBridge.exposeInMainWorld('argocast', {
+  mark: (m) => ipcRenderer.send('smoke:mark', String(m)), // smoke-test timing only
   getSettings: () => ipcRenderer.invoke('settings:get'),
   checkFfmpeg: () => ipcRenderer.invoke('ffmpeg:check'),
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
@@ -19,6 +20,11 @@ contextBridge.exposeInMainWorld('argocast', {
   onState: on('cast:state'),
   onStats: on('cast:stats'),
   onTouchback: on('cast:touchback'),
+  rxGet: () => ipcRenderer.invoke('rx:get'),
+  rxStart: () => ipcRenderer.invoke('rx:start'),
+  rxStop: () => ipcRenderer.invoke('rx:stop'),
+  rxDisconnect: () => ipcRenderer.send('rx:disconnect'),
+  onRx: on('rx:state'),
   getUpdate: () => ipcRenderer.invoke('update:get'),
   checkUpdate: () => ipcRenderer.invoke('update:check'),
   installUpdate: () => ipcRenderer.invoke('update:install'),
